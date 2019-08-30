@@ -1,0 +1,37 @@
+{
+    "title": "DEEP OC audio-classification-tf",
+    "summary": "An audio classifier with Deep Neural Networks",
+    "description": [
+		"This is audio-classification-tf application using DEEPaaS API",
+           "",
+           "**References**\n",
+           ""
+	],
+    "keywords": [
+        "docker"
+    ],
+    "license": "MIT",
+    "date_creation": "YYYY-MM-DD",
+    "sources": {
+		"dockerfile_repo": "https://github.com/deephdc/DEEP-OC-audio-classification-tf",
+		"docker_registry_repo": "deephdc/deep-oc-audio-classification-tf",
+		"code": "http://github.com/deephdc/audio-classification-tf"
+	},
+    "continuous_integration": {
+        "build_status_badge": "https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code/DEEP-OC-org/DEEP-OC-audio-classification-tf/master",
+        "build_status_url": "https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEP-OC-org/job/DEEP-OC-audio-classification-tf/job/master"
+    },
+    "tosca": [
+        {
+            "title": "Mesos (CPU)",
+            "url": "https://raw.githubusercontent.com/indigo-dc/tosca-templates/master/deep-oc/deep-oc-mesos-webdav.yml",
+            "inputs": [
+                "rclone_conf",
+                "rclone_url",
+                "rclone_vendor",
+                "rclone_user",
+                "rclone_pass"
+            ]
+        }
+    ]
+}
