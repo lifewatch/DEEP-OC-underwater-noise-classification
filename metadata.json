@@ -1,17 +1,27 @@
 {
-    "title": "DEEP OC audio-classification-tf",
+    "title": "DEEP OC Audio Classification (Tensorflow)",
     "summary": "An audio classifier with Deep Neural Networks",
     "description": [
-		"This is audio-classification-tf application using DEEPaaS API",
-           "",
-           "**References**\n",
-           ""
+        "This is a plug-and-play tool to perform audio classification with Deep Learning.",
+        "It allows the user to classify their samples of audio as well as training their ",
+        "own classifier for a custom problem.\n",
+
+        "The classifier is currently pretrained on the 527 high-level classes from the ",
+        "[AudioSet](https://research.google.com/audioset/) dataset.\n",
+
+        "<img class='fit', src='https://raw.githubusercontent.com/deephdc/DEEP-OC-audio-classification-tf/master/images/demo.png'/>\n",
+
+        "**References**\n",
+        "* _Jort F. Gemmeke, Daniel P. W. Ellis, Dylan Freedman, Aren Jansen, Wade Lawrence, R. Channing Moore, Manoj Plakal, Marvin Ritter_,['Audio set: An ontology and human-labeled dataset for audio events'](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45857.pdf), IEEE ICASSP, 2017.\n",
+        "* _Qiuqiang Kong, Yong Xu, Wenwu Wang, Mark D. Plumbley_,['Audio Set classification with attention model: A probabilistic perspective.'](https://arxiv.org/pdf/1711.00927.pdf) arXiv preprint arXiv:1711.00927 (2017).\n",
+        "* _Changsong Yu, Karim Said Barsim, Qiuqiang Kong, Bin Yang_ ,['Multi-level Attention Model for Weakly Supervised Audio Classification.'](https://arxiv.org/pdf/1803.02353.pdf) arXiv preprint arXiv:1803.02353 (2018).\n",
+        "* _S. Hershey, S. Chaudhuri, D. P. W. Ellis, J. F. Gemmeke, A. Jansen, R. C. Moore, M. Plakal, D. Platt, R. A. Saurous, B. Seybold et  al._, ['CNN architectures for large-scale audio classification,'](https://arxiv.org/pdf/1609.09430.pdf) arXiv preprint arXiv:1609.09430, 2016.\n"
 	],
     "keywords": [
-        "docker"
+        "models", "services", "library/tensorflow", "library/keras", "docker"
     ],
     "license": "MIT",
-    "date_creation": "YYYY-MM-DD",
+    "date_creation": "2019-09-01",
     "sources": {
 		"dockerfile_repo": "https://github.com/deephdc/DEEP-OC-audio-classification-tf",
 		"docker_registry_repo": "deephdc/deep-oc-audio-classification-tf",
