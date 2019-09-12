@@ -4,7 +4,7 @@
 
 # DEEP-OC-audio-classification-tf
 
-[![Build Status](https://jenkins.indigo-datacloud.eu:8080/buildStatus/icon?job=Pipeline-as-code/DEEP-OC-org/DEEP-OC-audio-classification-tf/master)](https://jenkins.indigo-datacloud.eu:8080/job/Pipeline-as-code/job/DEEP-OC-org/job/DEEP-OC-audio-classification-tf/job/master)
+[![Build Status](https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code/DEEP-OC-org/DEEP-OC-audio-classification-tf/master)](https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEP-OC-org/job/DEEP-OC-audio-classification-tf/job/master)
 
 This is a container that will simply run the DEEP as a Service API component,
 with audio-classification-tf (src: [audio-classification-tf](https://github.com/deephdc/audio-classification-tf)).
