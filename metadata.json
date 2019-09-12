@@ -3,10 +3,10 @@
     "summary": "An audio classifier with Deep Neural Networks",
     "description": [
         "This is a plug-and-play tool to perform audio classification with Deep Learning.",
-        "It allows the user to classify their samples of audio as well as training their ",
+        "It allows the user to classify their samples of audio as well as training their",
         "own classifier for a custom problem.\n",
 
-        "The classifier is currently pretrained on the 527 high-level classes from the ",
+        "The classifier is currently pretrained on the 527 high-level classes from the",
         "[AudioSet](https://research.google.com/audioset/) dataset.\n",
 
         "<img class='fit', src='https://raw.githubusercontent.com/deephdc/DEEP-OC-audio-classification-tf/master/images/demo.png'/>\n",
