@@ -62,17 +62,19 @@ RUN wget https://downloads.rclone.org/rclone-current-linux-amd64.deb && \
     rm -rf /tmp/*
 
 # Install DEEPaaS from PyPi
+RUN pip install --no-cache-dir deepaas && \
+    rm -rf /root/.cache/pip/* && \
+    rm -rf /tmp/*
+
 # Install FLAAT (FLAsk support for handling Access Tokens)
-RUN pip install --no-cache-dir \
-        'deepaas>=0.4.0' \
-        flaat && \
+RUN pip install --no-cache-dir flaat && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
 # Disable FLAAT authentication by default
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 
-# Install user app:
+# Install user app
 RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
     cd  audio-classification-tf && \
     pip install --no-cache-dir -e . && \
@@ -80,9 +82,8 @@ RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
     rm -rf /tmp/* && \
     cd ..
 
-# Download network weights
+# Download network weights: compressing with tar.xz gives decompression errors (corrupt data)
 ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/audio-classification-tf/
-# Compressing with .xz gives decompression errors (corrupt data)
 ENV MODEL_TAR default.tar.gz
 
 RUN curl -o ./audio-classification-tf/models/${MODEL_TAR} \
@@ -91,7 +92,6 @@ RUN curl -o ./audio-classification-tf/models/${MODEL_TAR} \
 RUN cd audio-classification-tf/models && \
     tar -zxvf ${MODEL_TAR}  && \
     rm ${MODEL_TAR}
-
 
 # Open DEEPaaS port
 EXPOSE 5000
