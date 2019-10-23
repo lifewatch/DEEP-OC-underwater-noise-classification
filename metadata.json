@@ -9,13 +9,16 @@
         "The classifier is currently pretrained on the 527 high-level classes from the",
         "[AudioSet](https://research.google.com/audioset/) dataset.\n",
 
+        "The PREDICT method expects an WAV file as input (or the url of a WAV file) and will return a JSON with ",
+        "the top 5 predictions.\n",
+
         "<img class='fit', src='https://raw.githubusercontent.com/deephdc/DEEP-OC-audio-classification-tf/master/images/demo.png'/>\n",
 
         "**References**\n",
-        "* _Jort F. Gemmeke, Daniel P. W. Ellis, Dylan Freedman, Aren Jansen, Wade Lawrence, R. Channing Moore, Manoj Plakal, Marvin Ritter_,['Audio set: An ontology and human-labeled dataset for audio events'](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45857.pdf), IEEE ICASSP, 2017.\n",
-        "* _Qiuqiang Kong, Yong Xu, Wenwu Wang, Mark D. Plumbley_,['Audio Set classification with attention model: A probabilistic perspective.'](https://arxiv.org/pdf/1711.00927.pdf) arXiv preprint arXiv:1711.00927 (2017).\n",
-        "* _Changsong Yu, Karim Said Barsim, Qiuqiang Kong, Bin Yang_ ,['Multi-level Attention Model for Weakly Supervised Audio Classification.'](https://arxiv.org/pdf/1803.02353.pdf) arXiv preprint arXiv:1803.02353 (2018).\n",
-        "* _S. Hershey, S. Chaudhuri, D. P. W. Ellis, J. F. Gemmeke, A. Jansen, R. C. Moore, M. Plakal, D. Platt, R. A. Saurous, B. Seybold et  al._, ['CNN architectures for large-scale audio classification,'](https://arxiv.org/pdf/1609.09430.pdf) arXiv preprint arXiv:1609.09430, 2016.\n"
+        "Jort F. Gemmeke, Daniel P. W. Ellis, Dylan Freedman, Aren Jansen, Wade Lawrence, R. Channing Moore, Manoj Plakal, Marvin Ritter,['Audio set: An ontology and human-labeled dataset for audio events'](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45857.pdf), IEEE ICASSP, 2017.\n",
+        "Qiuqiang Kong, Yong Xu, Wenwu Wang, Mark D. Plumbley,['Audio Set classification with attention model: A probabilistic perspective.'](https://arxiv.org/pdf/1711.00927.pdf) arXiv preprint arXiv:1711.00927 (2017).\n",
+        "Changsong Yu, Karim Said Barsim, Qiuqiang Kong, Bin Yang ,['Multi-level Attention Model for Weakly Supervised Audio Classification.'](https://arxiv.org/pdf/1803.02353.pdf) arXiv preprint arXiv:1803.02353 (2018).\n",
+        "S. Hershey, S. Chaudhuri, D. P. W. Ellis, J. F. Gemmeke, A. Jansen, R. C. Moore, M. Plakal, D. Platt, R. A. Saurous, B. Seybold et  al., ['CNN architectures for large-scale audio classification,'](https://arxiv.org/pdf/1609.09430.pdf) arXiv preprint arXiv:1609.09430, 2016.\n"
 	],
     "keywords": [
         "models", "services", "library/tensorflow", "library/keras", "docker"
