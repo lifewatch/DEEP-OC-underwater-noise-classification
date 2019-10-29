@@ -9,8 +9,8 @@
         "The classifier is currently pretrained on the 527 high-level classes from the",
         "[AudioSet](https://research.google.com/audioset/) dataset.\n",
 
-        "The PREDICT method expects an WAV file as input (or the url of a WAV file) and will return a JSON with ",
-        "the top 5 predictions.\n",
+        "The PREDICT method expects an audio file as input (or the url of a audio file) and will return a JSON with ",
+        "the top 5 predictions. Most audio file formats are supported (see FFMPEG compatible formats)\n",
 
         "<img class='fit', src='https://raw.githubusercontent.com/deephdc/DEEP-OC-audio-classification-tf/master/images/demo.png'/>\n",
 

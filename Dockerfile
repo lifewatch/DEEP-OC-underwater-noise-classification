@@ -74,6 +74,9 @@ RUN pip install --no-cache-dir flaat && \
 # Disable FLAAT authentication by default
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 
+# Install audio packages
+RUN apt-get install ffmpeg libavcodec-extra
+
 # Install user app
 RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
     cd  audio-classification-tf && \
