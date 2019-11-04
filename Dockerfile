@@ -75,7 +75,8 @@ RUN pip install --no-cache-dir flaat && \
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 
 # Install audio packages
-RUN apt-get install ffmpeg libavcodec-extra
+RUN apt update && \
+    apt install -y ffmpeg libavcodec-extra
 
 # Install user app
 RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
