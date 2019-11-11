@@ -18,7 +18,7 @@ To run the Docker container directly from Docker Hub and start using the API
 simply run the following command:
 
 ```bash
-$ docker run -ti -p 5000:5000 -p 6006:6006 deephdc/deep-oc-audio-classification-tf
+$ docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/deep-oc-audio-classification-tf
 ```
 
 This command will pull the Docker container from the Docker Hub
@@ -31,7 +31,6 @@ docker-compose.yml allows you to run the application with various configurations
 **N.B!** docker-compose.yml is of version '2.3', one needs docker 17.06.0+ and docker-compose ver.1.16.0+, see https://docs.docker.com/compose/install/
 
 If you want to use Nvidia GPU, you need nvidia-docker and docker-compose ver1.19.0+ , see [nvidia/FAQ](https://github.com/NVIDIA/nvidia-docker/wiki/Frequently-Asked-Questions#do-you-support-docker-compose)
-
 
 ### Building the container
 
@@ -56,8 +55,15 @@ Building the container:
 3. Run the container:
 
     ```bash
-    $ docker run -ti -p 5000:5000 -p 6006:6006 deephdc/deep-oc-audio-classification-tf
+    $ docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/deep-oc-audio-classification-tf
     ```
+   
+   You can also run Jupyter Lab inside the container:
+   
+   ```bash
+   $ docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/deep-oc-audio-classification-tf /bin/bash
+   $root@47a6604ef008:/srv# jupyter lab --allow-root
+   ```
 
 These three steps will download the repository from GitHub and will build the
 Docker container locally on your machine. You can inspect and modify the
