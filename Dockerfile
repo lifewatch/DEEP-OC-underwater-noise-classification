@@ -12,9 +12,6 @@ LABEL maintainer='Ignacio Heredia (CSIC)'
 LABEL version='0.1'
 # An audio classifier with Deep Neural Networks
 
-# python version
-ARG pyVer=python3
-
 # What user branch to clone (!)
 ARG branch=master
 
@@ -28,24 +25,16 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
          git \
          curl \
          wget \
-         $pyVer-setuptools \
-         $pyVer-pip \
-         $pyVer-wheel && \ 
+         psmisc \
+         python3-setuptools \
+         python3-pip \
+         python3-wheel && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/* && \
-    if [ "$pyVer" = "python3" ] ; then \
-       if [ ! -e /usr/bin/pip ]; then \
-          ln -s /usr/bin/pip3 /usr/bin/pip; \
-       fi; \
-       if [ ! -e /usr/bin/python ]; then \
-          ln -s /usr/bin/python3 /usr/bin/python; \
-       fi; \
-    fi && \
     python --version && \
     pip --version
-
 
 # Set LANG environment
 ENV LANG C.UTF-8
@@ -82,12 +71,8 @@ RUN git clone https://github.com/deephdc/deep-debug_log /srv/.debug_log
 
 # Install JupyterLab
 ENV JUPYTER_CONFIG_DIR /srv/.jupyter/
-# Necessary for the Jupyter Lab terminal
 ENV SHELL /bin/bash
 RUN if [ "$jlab" = true ]; then \
-       apt update && \
-       apt install -y nodejs npm && \
-       apt-get clean && \
        pip install --no-cache-dir jupyterlab ; \
        git clone https://github.com/deephdc/deep-jupyter /srv/.jupyter ; \
     else echo "[INFO] Skip JupyterLab installation!"; fi
@@ -108,7 +93,7 @@ RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
 ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/audio-classification-tf/
 ENV MODEL_TAR default.tar.gz
 
-RUN curl -o ./audio-classification-tf/models/${MODEL_TAR} \
+RUN curl --insecure -o ./audio-classification-tf/models/${MODEL_TAR} \
     ${SWIFT_CONTAINER}${MODEL_TAR}
 
 RUN cd audio-classification-tf/models && \
