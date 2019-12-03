@@ -21,7 +21,7 @@
         "S. Hershey, S. Chaudhuri, D. P. W. Ellis, J. F. Gemmeke, A. Jansen, R. C. Moore, M. Plakal, D. Platt, R. A. Saurous, B. Seybold et  al., ['CNN architectures for large-scale audio classification,'](https://arxiv.org/pdf/1609.09430.pdf) arXiv preprint arXiv:1609.09430, 2016.\n"
 	],
     "keywords": [
-        "library/tensorflow", "library/keras", "docker", "deep learning", "trainable", "inference", "pre-trained", "api-v1"
+        "tensorflow", "docker", "deep learning", "trainable", "inference", "pre-trained", "api-v1"
     ],
     "license": "MIT",
     "cite_url": "https://arxiv.org/pdf/1803.02353.pdf",
