@@ -8,7 +8,7 @@ ARG tag=1.14.0-py3
 # Base image, e.g. tensorflow/tensorflow:1.12.0-py3
 FROM tensorflow/tensorflow:${tag}
 
-LABEL maintainer='Ignacio Heredia (CSIC)'
+LABEL maintainer='Wout Decrop & Ignacio Heredia (CSIC)'
 LABEL version='0.1'
 # An audio classifier with Deep Neural Networks
 
