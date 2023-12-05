@@ -54,18 +54,19 @@ RUN wget https://downloads.rclone.org/rclone-current-linux-amd64.deb && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
-# Install oneclient for ONEDATA
-RUN curl -sS  http://get.onedata.org/oneclient-1902.sh | bash -s -- oneclient="$oneclient_ver" && \
-    apt-get clean && \
-    mkdir -p /mnt/onedata && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/*
+# # Install oneclient for ONEDATA
+# RUN curl -sS  http://get.onedata.org/oneclient-1902.sh | bash -s -- oneclient="$oneclient_ver" && \
+#     apt-get clean && \
+#     mkdir -p /mnt/onedata && \
+#     rm -rf /var/lib/apt/lists/* && \
+#     rm -rf /tmp/*
 
 # Install deep-start script
-# N.B.: This repository also contains run_jupyter.sh
+# * allows to run shorter command "deep-start"
+# * allows to install jupyterlab or code-server (vscode),
+#   if requested during container creation
 RUN git clone https://github.com/deephdc/deep-start /srv/.deep-start && \
-    ln -s /srv/.deep-start/deep-start.sh /usr/local/bin/deep-start && \
-    ln -s /srv/.deep-start/run_jupyter.sh /usr/local/bin/run_jupyter
+    ln -s /srv/.deep-start/deep-start.sh /usr/local/bin/deep-start
 
 # Install DEEPaaS from PyPi
 RUN pip install --no-cache-dir deepaas && \
@@ -96,21 +97,21 @@ RUN apt update && \
     apt install -y ffmpeg libavcodec-extra
 
 # Install user app
-RUN git clone -b $branch https://github.com/deephdc/audio-classification-tf && \
-    cd  audio-classification-tf && \
+RUN git clone -b $branch https://github.com/lifewatch/underwater-noise-classification && \
+    cd  underwater-noise-classification && \
     pip install --no-cache-dir -e . && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/* && \
     cd ..
 
 # Download network weights: compressing with tar.xz gives decompression errors (corrupt data)
-ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/audio-classification-tf/
+ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/underwater-noise-classification/
 ENV MODEL_TAR default.tar.gz
 
-RUN curl --insecure -o ./audio-classification-tf/models/${MODEL_TAR} \
+RUN curl --insecure -o ./underwater-noise-classification/models/${MODEL_TAR} \
     ${SWIFT_CONTAINER}${MODEL_TAR}
 
-RUN cd audio-classification-tf/models && \
+RUN cd underwater-noise-classification/models && \
     tar -zxvf ${MODEL_TAR}  && \
     rm ${MODEL_TAR}
 

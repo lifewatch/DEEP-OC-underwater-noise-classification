@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        dockerhub_repo = "deephdc/deep-oc-audio-classification-tf"
+        dockerhub_repo = "deephdc/uc-lifewatch-deep-oc-underwater-noise-classification"
         base_cpu_tag = "1.14.0-py3"
         base_gpu_tag = "1.14.0-gpu-py3"
     }
@@ -97,19 +97,5 @@ pipeline {
             }
         }
 
-        stage("Render metadata on the marketplace") {
-            when {
-                allOf {
-                    branch 'master'
-                    changeset 'metadata.json'
-                }
-            }
-            steps {
-                script {
-                    def job_result = JenkinsBuildJob("Pipeline-as-code/deephdc.github.io/pelican")
-                    job_result_url = job_result.absoluteUrl
-                }
-            }
-        }
     }
 }
