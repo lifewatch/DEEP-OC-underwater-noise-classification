@@ -68,29 +68,43 @@ RUN wget https://downloads.rclone.org/rclone-current-linux-amd64.deb && \
 RUN git clone https://github.com/deephdc/deep-start /srv/.deep-start && \
     ln -s /srv/.deep-start/deep-start.sh /usr/local/bin/deep-start
 
-# Install DEEPaaS from PyPi
-RUN pip install --no-cache-dir deepaas && \
+# # Install DEEPaaS from PyPi
+# RUN pip install --no-cache-dir deepaas && \
+#     rm -rf /root/.cache/pip/* && \
+#     rm -rf /tmp/*
+
+# Install FLAAT (FLAsk support for handling Access Tokens)
+RUN pip install --upgrade setuptools
+RUN pip install --upgrade pip
+
+
+RUN pip install --no-cache-dir flaat cachetools==4.* && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
-# Install FLAAT (FLAsk support for handling Access Tokens)
-RUN pip install --no-cache-dir flaat && \
-    rm -rf /root/.cache/pip/* && \
-    rm -rf /tmp/*
+
+# RUN pip install --no-cache-dir flaat && \
+#     rm -rf /root/.cache/pip/* && \
+#     rm -rf /tmp/*
 
 # Disable FLAAT authentication by default
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 
+# Useful tool to debug extensions loading
+RUN pip install --no-cache-dir entry_point_inspector && \
+    rm -rf /root/.cache/pip/* && \
+    rm -rf /tmp/*
+
 # Install DEEP debug_log scripts:
-RUN git clone https://github.com/deephdc/deep-debug_log /srv/.debug_log
+# RUN git clone https://github.com/deephdc/deep-debug_log /srv/.debug_log
 
 # Install JupyterLab
-ENV JUPYTER_CONFIG_DIR /srv/.jupyter/
+# ENV JUPYTER_CONFIG_DIR /srv/.jupyter/
 ENV SHELL /bin/bash
-RUN if [ "$jlab" = true ]; then \
-       pip install --no-cache-dir jupyterlab ; \
-       git clone https://github.com/deephdc/deep-jupyter /srv/.jupyter ; \
-    else echo "[INFO] Skip JupyterLab installation!"; fi
+# RUN if [ "$jlab" = true ]; then \
+#        pip install --no-cache-dir jupyterlab ; \
+#        git clone https://github.com/deephdc/deep-jupyter /srv/.jupyter ; \
+#     else echo "[INFO] Skip JupyterLab installation!"; fi
 
 # Install audio packages
 RUN apt update && \
@@ -104,8 +118,13 @@ RUN git clone -b $branch https://github.com/lifewatch/underwater-noise-classific
     rm -rf /tmp/* && \
     cd ..
 
+# RUN cd  underwater-noise-classification && \
+#     pip install --no-cache-dir -e . && \
+#     cd ..
+
 # Download network weights: compressing with tar.xz gives decompression errors (corrupt data)
-ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/underwater-noise-classification/
+# ENV SWIFT_CONTAINER https://cephrgw01.ifca.es:8080/swift/v1/audio-classification-tf/
+ENV SWIFT_CONTAINER https://api.cloud.ifca.es:8080/swift/v1/audio-classification-tf/
 ENV MODEL_TAR default.tar.gz
 
 RUN curl --insecure -o ./underwater-noise-classification/models/${MODEL_TAR} \
@@ -125,4 +144,4 @@ EXPOSE 6006
 EXPOSE 8888
 
 # Account for OpenWisk functionality (deepaas >=0.4.0) + proper docker stop
-CMD ["deepaas-run", "--openwhisk-detect", "--listen-ip", "0.0.0.0", "--listen-port", "5000"]
+CMD ["deepaas-run", "--listen-ip", "0.0.0.0", "--listen-port", "5000"]
