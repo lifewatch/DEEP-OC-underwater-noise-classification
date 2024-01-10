@@ -23,25 +23,50 @@ ARG jlab=true
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install ubuntu updates and python related stuff
-# link python3 to python, pip3 to pip, if needed
-RUN apt-get update && \
+RUN rm /etc/apt/sources.list.d/cuda.list || true
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list || true
+
+
+# ... (previous instructions)
+RUN apt-get update && apt-get install -y \
+    gnupg \
+    wget \
+    # Other necessary packages...
+    && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+# ... (following instructions)
+
+# RUN apt-key del 7fa2af80 
+# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
+#     && dpkg -i cuda-keyring_1.0-1_all.deb
+
+
+# # Install ubuntu updates and python related stuff
+# RUN apt-get update && \
+#     apt-get install -y gnupg
+# RUN apt-get install wget
+
+
+# RUN apt-key del 7fa2af80 
+# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
+#     && dpkg -i cuda-keyring_1.0-1_all.deb
+
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends \
-         git \
-         curl \
-         wget \
-         psmisc \
-         python3-setuptools \
-         python3-pip \
-         python3-wheel \
-         libgl1 \
-         libsm6 \
-         libxrender1 \
-         libfontconfig1 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /root/.cache/pip/* \
-    && rm -rf /tmp/*
+        git \
+        curl \
+        wget \
+        psmisc \
+        python3-setuptools \
+        python3-pip \
+        python3-wheel && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/.cache/pip/* && \
+    rm -rf /tmp/* && \
+    python --version && \
+    pip --version
+
 
 # Set LANG environment
 ENV LANG C.UTF-8

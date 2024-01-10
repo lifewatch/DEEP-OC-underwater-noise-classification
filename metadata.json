@@ -1,7 +1,7 @@
 {
     "title": "Train an underwater-noise-classification (VLIZ)",
     "summary": "Train your own underwater-noise-classifier with your custom dataset to idenity ships  ",
-    "description": [" "],
+    "description": [""],
     "keywords": [
         "tensorflow", "docker", "deep learning", "trainable", "inference", "pre-trained", "api-v2", "underwater-noise", "vo.imagine-ai.eu"
     ],
