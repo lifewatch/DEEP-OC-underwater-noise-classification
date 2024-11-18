@@ -1,50 +1,10 @@
-# sphinx build folder
-_build
-build
-
-# Compiled source #
-###################
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Logs and databases #
-######################
-*.log
-*.sql
-*.sqlite
-
-# OS generated files #
-######################
-.DS_Store?
-ehthumbs.db
-Icon?
-Thumbs.db
-
-# Editor backup files #
-#######################
-*~
-.*.swp
-
-# Pycharm
-.idea
-
-# DEEP submission via orchent
-submit_*.sh
-sub_*.sh
+3_1_Results/BioLingual/*
+3_3_figures/predicted_true_values_2024-06-15_00-13-39_1_0_0_0_filtered_classes_window4_speed.cs
+3_3_figures/predicted_true_values_2024-06-15_00-13-39_1_0_0_0_filtered_classes_window4_speed.csV
+3_3_figures/predicted_true_values_2024-07-15_19-45-05_1_0_0_0_spectrogram_PAPER_NORMAL.csv
+3_3_figures/predicted_true_values_2024-08-07_23-55-09_1_0_0_0_spectrogram_PAPER_5_0.5.csv
+3_1_Results/2024-08-08_14-17_1-0-0-0/2024-08-08_14-17_1-0-0-0.csv
+3_3_figures/.ipynb_checkpoints/predicted_true_values_2024-06-15_00-13-39_1_0_0_0_filtered_classes_window4_speed-checkpoint.csV
+# Ignore specific large files or directories
+3_1_Results/BioLingual/*
+3_3_figures/*.csv
