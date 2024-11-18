@@ -3,13 +3,16 @@
 # pyVer - python versions as 'python' or 'python3' (default: python3)
 # branch - user repository branch to clone (default: master, other option: test)
 
-ARG tag=1.14.0-py3
+# Use the official PyTorch image with version 2.1.0 and Python 3
+ARG tag=2.1.0-cuda11.8-cudnn8-runtime
+FROM pytorch/pytorch:${tag}
 
-# Base image, e.g. tensorflow/tensorflow:1.12.0-py3
-FROM tensorflow/tensorflow:${tag}
+# Metadata
+LABEL maintainer="Wout Decrop & Ignacio Heredia (CSIC)"
+LABEL version="0.1"
 
-LABEL maintainer='Wout Decrop & Ignacio Heredia (CSIC)'
-LABEL version='0.1'
+# Set environment variables (optional)
+ENV DEBIAN_FRONTEND=noninteractive
 # An audio classifier with Deep Neural Networks
 
 # What user branch to clone (!)
@@ -17,20 +20,6 @@ ARG branch=master
 # If to install JupyterLab
 ARG jlab=true
 # Oneclient version
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN rm /etc/apt/sources.list.d/cuda.list || true
-RUN rm /etc/apt/sources.list.d/nvidia-ml.list || true
-
-
-# ... (previous instructions)
-RUN apt-get update && apt-get install -y \
-    gnupg \
-    wget \
-    # Other necessary packages...
-    && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-# ... (following instructions)
 
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
@@ -90,14 +79,6 @@ RUN pip install --no-cache-dir flaat && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
-
-
-
-
-# RUN pip install --no-cache-dir flaat && \
-#     rm -rf /root/.cache/pip/* && \
-#     rm -rf /tmp/*
-
 # Disable FLAAT authentication by default
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 
@@ -111,17 +92,10 @@ RUN pip install --no-cache-dir entry_point_inspector && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
-# Install DEEP debug_log scripts:
-# RUN git clone https://github.com/deephdc/deep-debug_log /srv/.debug_log
 
 # Install JupyterLab
 # ENV JUPYTER_CONFIG_DIR /srv/.jupyter/
 ENV SHELL /bin/bash
-# RUN if [ "$jlab" = true ]; then \
-#        pip install --no-cache-dir jupyterlab ; \
-#        git clone https://github.com/deephdc/deep-jupyter /srv/.jupyter ; \
-#     else echo "[INFO] Skip JupyterLab installation!"; fi
-
 # Install audio packages
 RUN apt update && \
     apt install -y ffmpeg libavcodec-extra
