@@ -102,7 +102,7 @@ RUN apt update && \
 
 # Install user app
 RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
-    cd  underwater-noise-classification && \
+    cd  DEEP-OC-underwater-noise-classification && \
     pip install --no-cache-dir -e . && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/* && \
