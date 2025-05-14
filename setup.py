@@ -11,8 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Python package setup"""
-
 import setuptools
 
-setuptools.setup(setup_requires=["pbr>=1.8"], pbr=True)
+setuptools.setup(
+    setup_requires=["pbr>=1.8"],
+    pbr=True,
+    install_requires=[
+        "webargs~=5.5.3",  # Correctly placed here
+        "deepaas>=2.1.0"
+    ]
+)
