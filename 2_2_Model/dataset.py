@@ -16,11 +16,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import re
 
+import shutil
+
+import subprocess
 import ray  # Ensure Ray is imported
 # from ray import tune
+from ray.train import report 
 
 class CLAP_Vessel_Distance:
-    def __init__(self, config, weights=None):
+    def __init__(self, config, weights=None,  batch_size=None, epochs=None, lr=None, freeze_clap=True,save_model=True, MSE=False ):
         self.config = config
         self.weights = weights or {
             'distance_weight': 1,
@@ -28,16 +32,21 @@ class CLAP_Vessel_Distance:
             'activity_weight': 0,
             'vessel_type_weight': 0
         }
-        self._setup_params(config)
+        self.freeze_clap=freeze_clap
+        self.L2=L2
+        self.save_model=save_model
+        self.batch_size = batch_size or self.config.get('batch_size')
+        self.epochs = epochs or self.config.get('epochs')
+        self.lr = lr or self.config.get('lr')
 
+            
+        self._setup_params(config)
         torch.backends.cudnn.benchmark = True  # Optimize CUDA performance
     def _create_folder(self):
-        self.weights_str = '_'.join([f"{u.float_to_string(value)}" for _, value in self.weights.items()])+ "_" + str(round(self.a,3)) + "_" + str(round(self.b,3)) 
-
-        self.result_dir = f"/srv/CLAP/3_1_Results/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')}_{self.weights_str}"
+        self.weights_str = '_'.join([f"{u.float_to_string(value)}" for _, value in self.weights.items()])+ "_" + self.param_a + "_" + self.param_b 
+        self.result_dir = f"/srv/CLAP/temporary/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')}_{self.weights_str}"
         self.model_folder = os.path.join(self.result_dir, "model")
         os.makedirs(self.model_folder, exist_ok=True)
-
     def _setup_params(self, config):
         """Initialize parameters from the config."""
         self.duration = config['duration']
@@ -50,7 +59,13 @@ class CLAP_Vessel_Distance:
         self.d_valid_path = config['d_valid_path']
         self.d_test_path = config['d_test_path']
         self.model_path='davidrrobinson/BioLingual'
-        self.embeddings_path='/srv/CLAP/embeddings'
+        dirs='/srv/CLAP/embeds'
+        self.embeddings_path=dirs
+        # dirs='/storage/CLAP_paper/embeddings'
+        # if self.freeze_clap: 
+        #     self.embeddings_path=dirs + '_clap_test'
+        # else: 
+        #     self.embeddings_path=dirs+ '_spectrogram_test'
         # self.model_path='/srv/CLAP/3_1_Results/2024-11-07_12-19_1_0_0_0_-3.0_0.4/model'
     def _initialize_device(self):
         """Check for CUDA availability and set the device accordingly."""
@@ -71,7 +86,7 @@ class CLAP_Vessel_Distance:
         # logging.info(f"Configuration: lr = {self.config.get('lr')}, batch_size = {self.batch_size}, epochs = {self.epochs}")
         self.logging.info(f"Results directory: {self.result_dir}")
 
-    def _prepare_dataloaders(self, batch_size, stop_shuffle):
+    def _prepare_dataloaders(self, batch_size, stop_shuffle,creating_embeddings):
         """Prepare dataloaders for training, validation, and test sets."""
         d_train_loc = self._load_dataset_paths(self.d_train_path)
         d_valid_loc = self._load_dataset_paths(self.d_valid_path)
@@ -79,10 +94,7 @@ class CLAP_Vessel_Distance:
 
         d_train, d_valid, d_test = self._process_datasets(d_train_loc, d_valid_loc, d_test_loc)
 
-        model, similarity_matrices = self._initialize_model(
-            a=self.a,
-            b=self.b
-        )
+        model, similarity_matrices = self._initialize_model()
         self.model=model
         self.similarity_matrices=similarity_matrices
 
@@ -98,25 +110,33 @@ class CLAP_Vessel_Distance:
         def is_empty(directory):
             return not os.listdir(directory)  # Returns True if directory is empty
         
-        # Check if the directories are empty and act accordingly
-        if is_empty(train_path) and is_empty(valid_path) and is_empty(test_path):
-            print('is empty')
-            # Compute and save embeddings if directories are empty
-            d_train = model.compute_embedding(d_train, desired_fs=self.desired_fs, max_duration=self.duration, device=self.device, embeddings_path=self.embeddings_path, desc="train")
-            d_valid = model.compute_embedding(d_valid, desired_fs=self.desired_fs, max_duration=self.duration, device=self.device, embeddings_path=self.embeddings_path, desc="Validation")
-            d_test = model.compute_embedding(d_test, desired_fs=self.desired_fs, max_duration=self.duration, device=self.device, embeddings_path=self.embeddings_path, desc="Test")
-        else:
-            print('created already')
-            # If directories are not empty, add embedding paths to DataFrames
-            def add_embedding_column(df, desc):
-                # Update each DataFrame with the computed embedding paths
-                df["embedding"] = df["filename"].apply(lambda x: os.path.join(self.embeddings_path, desc, os.path.splitext(os.path.basename(x))[0] + '.pt'))
-                return df
-        
-            # Apply the function to each dataset
-            d_train = add_embedding_column(d_train, "train")
-            d_valid = add_embedding_column(d_valid, "Validation")
-            d_test = add_embedding_column(d_test, "Test")
+        # Check if all directories are empty
+        if is_empty(train_path) or is_empty(valid_path) or is_empty(test_path):
+            if creating_embeddings:
+                print("Creating all embeddings now")
+                dataloader_train = self._create_dataloader_embedding_maker(d_train,batch_size, stop_shuffle)
+                dataloader_val = self._create_dataloader_embedding_maker( d_valid,batch_size, stop_shuffle)
+                dataloader_test = self._create_dataloader_embedding_maker( d_test,batch_size, True)
+                return dataloader_train, dataloader_val, dataloader_test
+            else:
+                print("Directories are empty. Running script to create embeddings...")
+                script_path = "/srv/CLAP/2_2_Model_hyper/create_embeddings.py"
+                # Use subprocess to run the script
+                try:
+                    subprocess.run(["python", script_path], check=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error running the script: {e}")
+
+
+        def add_embedding_column(df, desc):
+            # Update each DataFrame with the computed embedding paths
+            df["embedding"] = df["filename"].apply(lambda x: os.path.join(self.embeddings_path, desc, os.path.splitext(os.path.basename(x))[0] + '.pt'))
+            return df
+    
+        # Apply the function to each dataset
+        d_train = add_embedding_column(d_train, "train")
+        d_valid = add_embedding_column(d_valid, "Validation")
+        d_test = add_embedding_column(d_test, "Test")
 
 
         dataloader_train = self._create_dataloader(d_train,"train" ,batch_size, stop_shuffle)
@@ -150,6 +170,14 @@ class CLAP_Vessel_Distance:
         label_counts = d_train['label'].value_counts()
         return label_counts[label_counts >= 5].index
 
+    def _create_dataloader_embedding_maker(self, df, batch_size, stop_shuffle):
+        return torch.utils.data.DataLoader(
+            dataset=u.DatasetWaveform(df=df, wavs_folder=self.wavs_folder, desired_fs=self.desired_fs,
+                                      max_duration=self.duration, ids=self.ids),
+            batch_size=batch_size,
+            shuffle=not stop_shuffle
+        )
+        
     def _create_dataloader(self, df,desc, batch_size, stop_shuffle):
         return torch.utils.data.DataLoader(
             dataset=u.DatasetLoadEmbeddings(df=df,ids=self.ids,device=self.device),
@@ -180,7 +208,7 @@ class CLAP_Vessel_Distance:
         df = pd.concat([self.d_test, df], axis=1)
 
         def extract_timestamps(filename):
-            # Regular expression to match timestamps in the format YYYY-MM-DD_HH-MM-SS
+            # Regular expression to match timestamps in the format YYYY-m-DD_HH-m-SS
             timestamp_pattern = r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
             timestamps = re.findall(timestamp_pattern, filename)
             return timestamps[0] if timestamps else None
@@ -200,9 +228,6 @@ class CLAP_Vessel_Distance:
         # Compute confusion matrix
         labels=sorted(set(actual_values) | set(predicted_values))
         labels.sort()
-        # print(labels)
-
-        # print(labels)
         km_labels = u.convert_labels_to_km(labels)
         actual_values_cat = u.convert_labels_to_km(actual_values)
         predicted_values_cat = u.convert_labels_to_km(predicted_values)
@@ -213,18 +238,50 @@ class CLAP_Vessel_Distance:
         # Calculate the MSE
         mse = mean_squared_error(actual_values, predicted_values)
         rmse = round(np.sqrt(mse),3)
-        if rmse>3:
-            # shutil.rmtree(self.result_dir, ignore_errors=True)
-            return
-        print(f"Root Mean Squared Error (RMSE): {round(rmse,3)} km for a:{self.a} and b:{self.b}")
+        # if rmse>3:
+            # Define the target directory
+        target_dir = "/srv/CLAP/3_1_Results"
+        os.makedirs(target_dir, exist_ok=True)
+        # Copy the directory
+        # Extract the folder name from result_dir
+        dirname = os.path.basename(self.result_dir.rstrip('/\\'))
+        
+        # Copy the directory, maintaining the same folder name in the target directory
+        shutil.copytree(self.result_dir, os.path.join(target_dir, dirname), dirs_exist_ok=True)
+        # self.logging.info(f"not saved cuz {rmse} lower then 3")
+        # Log the successful copy
+        self.logging.info(f"Directory copied from {self.result_dir} to {target_dir}")
+        
+        # Remove the original directory
+        shutil.rmtree(self.result_dir, ignore_errors=True)
+        self.logging.info(f"Original directory {self.result_dir} deleted.")
+        
+        # except Exception as e:
+        #     # Log any exceptions that occur
+        #     self.logging.error(f"Failed to copy or delete directory: {e}")
+        self.result_dir=os.path.join(target_dir, dirname)
 
-        CM_filename = 'CM_{}_{}_{}_{}_{}_bs_{}.png'.format(self.timestamp, self.weights_str,round(rmse,3),self.batch_size)
+        print(f"Root Mean Squared Error (RMSE): {round(rmse,3)} km for a:{self.param_a} and b:{self.param_b}")
+        self.logging.info(f"Root Mean Squared Error (RMSE): {round(rmse,3)} km for a:{self.param_a} and b:{self.param_b}")
+        CM_filename = 'CM_{}_RMSE_{}_bs_{}_a_{}_b_{}_lr_{}_MSE_{}.png'.format(self.timestamp,round(rmse,3),self.batch_size,self.param_a, self.param_b, self.lr,self.MSE)
         CM_file_path_all = os.path.join(self.result_dir, CM_filename)
+
+        CM_filename_plot = 'CM_{}_RMSE_{}_bs_{}_a_{}_b_{}_lr_{}_MSE_{}_plot.png'.format(self.timestamp,round(rmse,3),self.batch_size,self.param_a, self.param_b, self.lr,self.MSE)
+        CM_file_path_all_plot = os.path.join(self.result_dir, CM_filename_plot)
         
-        u.plot_confusion_matrix(cm, classes=km_labels,title=f"CM with RMSE: {rmse} for a:{round(self.a,3)} and b:{round(self.b,3)} and batch_size: {self.batch_size}", save_path=CM_file_path_all)
+        u.plot_confusion_matrix(cm, classes=km_labels,title=f"CM with RMSE: {rmse} for a:{self.param_a} and b:{self.param_b} and batch_size: {self.batch_size}", save_path=CM_file_path_all)
+        u.plot_confusion_matrix(cm, classes=km_labels,title=f"", save_path=CM_file_path_all_plot)
         
-        CM_file_path_all = os.path.join("/srv/CLAP/3_3_figures/confusion_matrices/", CM_filename )
-        u.plot_confusion_matrix(cm, classes=labels,title=f"CM with RMSE: {rmse}", save_path=CM_file_path_all)
+        CM_file_path_figures = os.path.join("/srv/CLAP/3_3_figures/confusion_matrices/", CM_filename )
+        u.plot_confusion_matrix(cm, classes=km_labels,title=f"CM with RMSE: {rmse}", save_path=CM_file_path_figures)
+    def embeddings_test_val(self, model, dataloader, similarity_matrices, desc):
+        progress_bar = tqdm(dataloader, desc=desc, leave=True)
+        with torch.no_grad():
+            for x, y,wav_path in progress_bar:
+                x, y = x.to(self.device), y.to(self.device)
+                # print(wav_path)
+                wav_path=str(wav_path)
+                model(x, y, desc,wav_path,creating_embeddings=True)
 
     def eval_pytorch_model(self, model, dataloader, similarity_matrices, desc):
         """Evaluate the model and return loss, metrics, and MSE."""
@@ -242,14 +299,13 @@ class CLAP_Vessel_Distance:
         predicted_list_numbers = []
         
         progress_bar = tqdm(dataloader, desc=desc, leave=True)
-        iterator=0
         with torch.no_grad():
             for x, y in progress_bar:
                 x, y = x.to(self.device), y.to(self.device)
 
                 loss, logits = model(x, y)
                 logits=logits.squeeze(1)
-                iterator+=1
+
                 total_loss += loss.cpu().item()
                 steps += 1
 
@@ -289,9 +345,9 @@ class CLAP_Vessel_Distance:
         if desc == "Test":
             self._save_csv(predicted_list, true_values_list,predicted_list_numbers,true_values_list_numbers, self.weights)
             self._save_figure(true_values_list_numbers, predicted_list_numbers)
-        return total_loss / steps, metrics_avg, MSE_avg 
+        return total_loss / steps, metrics_avg, L2_avg 
 
-    def _initialize_model(self, a, b):
+    def _initialize_model(self):
         """Initialize and return the model with similarity matrices."""
         # Check which weights are non-zero
         non_zero_weights = {k: v for k, v in self.weights.items() if v != 0}
@@ -301,20 +357,20 @@ class CLAP_Vessel_Distance:
         
         if len(non_zero_weights) > 1:
             # If more than one weight is non-zero, initialize the Metric matrix and specific matrices
-            similarity_matrices['Metric'] = u.similarity(self.ids, self.device, a, b, **self.weights)
+            similarity_matrices['Metric'] = u.similarity(self.ids, self.device, self.param_a, self.param_b , L2=self.L2,**self.weights)
             
             if 'distance_weight' in non_zero_weights:
-                similarity_matrices['distance'] = u.similarity(self.ids, self.device, a, b, distance_weight=1)
+                similarity_matrices['distance'] = u.similarity(self.ids, self.device, self.param_a, self.param_b, L2=self.L2, distance_weight=1)
             if 'speed_weight' in non_zero_weights:
-                similarity_matrices['speed'] = u.similarity(self.ids, self.device, a, b, speed_weight=1)
+                similarity_matrices['speed'] = u.similarity(self.ids, self.device, self.param_a, self.param_b, L2=self.L2, speed_weight=1)
             if 'activity_weight' in non_zero_weights:
-                similarity_matrices['activity'] = u.similarity(self.ids, self.device, a, b, activity_weight=1)
+                similarity_matrices['activity'] = u.similarity(self.ids, self.device, self.param_a, self.param_b, L2=self.L2, activity_weight=1)
             if 'vessel_type_weight' in non_zero_weights:
-                similarity_matrices['type'] = u.similarity(self.ids, self.device, a, b, vessel_type_weight=1)
+                similarity_matrices['type'] = u.similarity(self.ids, self.device, self.param_a, self.param_b, L2=self.L2, vessel_type_weight=1)
         else:
             # If only one weight is non-zero, initialize only the Metric matrix
-            similarity_matrices['Metric'] = u.similarity(self.ids, self.device, a, b, **self.weights)
-        
+            similarity_matrices['Metric'] = u.similarity(self.ids, self.device, self.param_a, self.param_b, L2=self.L2, **self.weights)
+        print(self.ids)
         # Initialize the model with the Metric similarity matrix
         model = models.CLAPClassifier(
             self.model_path,
@@ -323,27 +379,44 @@ class CLAP_Vessel_Distance:
             device=self.device,
             similarity_matrix=similarity_matrices['Metric'],
             embeddings_path=self.embeddings_path,
-            multi_label=False,
-            layer_size_1=self.layer_size_1, 
-            layer_size_2=self.layer_size_2,
-            layer_size_3=self.layer_size_3
+            freeze_clap=self.freeze_clap
         )
         model = model.to(self.device)
         print(model.clap.training)
         return model, similarity_matrices
 
+    
 
-    def _train_model(self, model, dataloader_train, dataloader_val, optimizer, scheduler, epochs, patience, similarity_matrices):
+    def _create_embeddings(self, model, dataloader_train, dataloader_val, optimizer, scheduler, epochs, patience_stop, similarity_matrices):
         """Train the model with early stopping, logging, and additional metrics."""
+        for epoch in range(epochs):
+            progress_bar = tqdm(dataloader_train, desc=f"Epoch {epoch + 1}/{epochs}", leave=True)
+            for x, y, wav_path in progress_bar:
+                x, y = x.to(self.device), y.to(self.device)
+                model(x, y,desc="train",wav_path=str(wav_path),creating_embeddings=True)
+               
+        self.embeddings_test_val(model, dataloader_val, similarity_matrices, "Validation")
+
+
+    
+
+    def _train_model(self, model, dataloader_train, dataloader_val, optimizer, scheduler, epochs, patience_stop, similarity_matrices):
+        """Train the model with early stopping, logging, and additional metrics."""
+
+
+        # Your training logic here
+        print(f"Start training with following parameters: param_a: {self.param_a} |  param_b: {self.param_b} | Batch size: {self.batch_size} | Epochs: {self.epochs} | lr: {self.lr} | Save model: {self.save_model} | MSE: {self.MSE}")
+        self.logging.info(f"Start training with following parameters: param_a: {self.param_a} |  param_b: {self.param_b} | Batch size: {self.batch_size} | Epochs: {self.epochs} | lr: {self.lr} | Save model: {self.save_model}| MSE: {self.MSE}")
+
+        
         best_metric = float('-inf')
         early_stopping_counter = 0
-        # epochs=1
 
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         for epoch in range(epochs):
             # Freeze CLAP parameters
-            for param in model.clap.parameters():
-                param.requires_grad = False
+            # for param in model.clap.parameters():
+            #     param.requires_grad = False
             
 
             total_loss = 0.0
@@ -352,12 +425,12 @@ class CLAP_Vessel_Distance:
             MSE_list = []
 
             progress_bar = tqdm(dataloader_train, desc=f"Epoch {epoch + 1}/{epochs}", leave=True)
-            iterator=0
+
+                            
             for x, y in progress_bar:
                 x, y = x.to(self.device), y.to(self.device)
                 optimizer.zero_grad()
                 loss, logits = model(x, y)
-                iterator+=1
                 loss.backward()
                 optimizer.step()
 
@@ -387,24 +460,24 @@ class CLAP_Vessel_Distance:
             avg_loss, val_metrics, val_mse = self.eval_pytorch_model(model, dataloader_val, similarity_matrices, "Validation")
 
             # Report the validation loss to Ray Tune
-            # if hasattr(ray, 'tune'):  # Check if Ray Tune is available
-                # tune.report(val_loss=avg_loss)
-            ray.train.report(dict(val_mse=val_mse))
+            report(dict(val_mse=val_mse))
             
             scheduler.step(avg_loss)
             # Log the current learning rate after the scheduler step
             for param_group in optimizer.param_groups:
                 self.logging.info(f"Current learning rate: {param_group['lr']}")
-    
+                print(f"Current learning rate: {param_group['lr']}")
             if val_metrics['Metric'] > best_metric:
+                self.logging.info(f" val_metrics['Metric'] : {val_metrics['Metric']} is smaller then best_metric : {best_metric  }")
                 best_metric = val_metrics['Metric']
-                # self._save_model(model)
-                self.best_model=model
+                self._save_model(model)
+                self.param_best_model=model
                 early_stopping_counter = 0
             else:
                 early_stopping_counter += 1
+                self.logging.info(f"Early stopping counter {early_stopping_counter}")
 
-            if early_stopping_counter >= patience:
+            if early_stopping_counter >= patience_stop:
                 self.logging.info("Early stopping triggered.")
                 break
 
@@ -417,58 +490,59 @@ class CLAP_Vessel_Distance:
         self.logging.info("Training completed.")
         print("Training completed.")
 
+    
     def _save_model(self, model):
         """Save the model and its components."""
         if self.save_model:
             model.clap.save_pretrained(self.model_folder)
             model.processor.save_pretrained(self.model_folder)
-            torch.save(model.linear.state_dict(), os.path.join(self.model_folder, 'linear.pth'))
+            u.save_layer_weights(model, self.model_folder)
             self.logging.info(f"Model saved to {self.model_folder}")
     
-    def train_CLAP(self, a, b, batch_size=None, epochs=None, layer_size_1=None, layer_size_2=None, layer_size_3=None, lr=None, save_model=True, stop_shuffle=False):
+    def train_CLAP(self, param_a=str(0.5), param_b=str(0.5), stop_shuffle=False, creating_embeddings=False):
         # Set default values from self.config if not provided
-        if batch_size is None:
-            batch_size = self.config.get('batch_size')
-        if epochs is None:
-            epochs = self.config.get('epochs')
-        self.layer_size_1=layer_size_1
-        self.layer_size_2=layer_size_2
-        self.layer_size_3=layer_size_3
-    
         """Main training loop."""
         self.device = self._initialize_device()
-    
-        self.a=round(a, 1)
-        self.b=round(b, 1)
-        self.batch_size=batch_size
-        self.epochs=epochs
+        
+        self.param_a=param_a
+        self.param_b=param_b
+
         self._create_folder()
         self._setup_logging()
-        self.save_model= save_model
-        # Your training logic here
-        print(f"Batch size: {batch_size}, Epochs: {epochs}, Stop shuffle: {stop_shuffle}, Save model: {save_model}")
-        self.logging.info(f"Batch size: {batch_size}, Epochs: {epochs}, Stop shuffle: {stop_shuffle}, Save model: {save_model}")
-
+        
         dataloader_train, dataloader_val, dataloader_test = self._prepare_dataloaders(
-            batch_size=batch_size,
-            stop_shuffle=stop_shuffle
+            batch_size=self.batch_size,
+            stop_shuffle=stop_shuffle, 
+            creating_embeddings=creating_embeddings
         )
 
-        # print("learning rate: ",float(self.config.get('lr')) )
-        # self.logging.info("learning rate: ",float(self.config.get('lr')) )
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=2, verbose=True)
+        self.param_best_model=self.model
+        if creating_embeddings:
+            self._create_embeddings(
+                model=self.model,
+                dataloader_train=dataloader_train,
+                dataloader_val=dataloader_val,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                epochs=1,
+                patience_stop=self.config.get('patience_stop'),
+                similarity_matrices=self.similarity_matrices
+            )
+            self.embeddings_test_val(self.param_best_model, dataloader_test, self.similarity_matrices, "Test")
+        else: 
+            self._train_model(
+                model=self.model,
+                dataloader_train=dataloader_train,
+                dataloader_val=dataloader_val,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                epochs=self.epochs,
+                patience_stop=self.config.get('patience_stop'),
+                similarity_matrices=self.similarity_matrices
+            )
+            self.logging.info(f"Starting Test set")
+            print(f"Starting Test set")
+            self.eval_pytorch_model(self.param_best_model, dataloader_test, self.similarity_matrices, "Test")
 
-        self._train_model(
-            model=self.model,
-            dataloader_train=dataloader_train,
-            dataloader_val=dataloader_val,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            epochs=self.config.get('epochs'),
-            patience=self.config.get('patience'),
-            similarity_matrices=self.similarity_matrices
-        )
-
-        # Evaluate on test set
-        self.eval_pytorch_model(self.best_model, dataloader_test, self.similarity_matrices, "Test")

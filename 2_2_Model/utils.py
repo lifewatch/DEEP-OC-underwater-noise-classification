@@ -21,6 +21,38 @@ import pathlib
 
 from datetime import datetime
 
+import os
+import shutil
+
+def delete_all_subfolders(parent_dir):
+    """
+    Deletes all subfolders in the specified parent directory.
+    
+    Args:
+        parent_dir (str): Path to the parent directory.
+    """
+    # print(f"Deleting all subfolders in: {parent_dir}")
+    for subfolder in os.listdir(parent_dir):
+        subfolder_path = os.path.join(parent_dir, subfolder)
+        if os.path.isdir(subfolder_path):  # Check if it's a directory
+            # print(f"Deleting subfolder: {subfolder_path}")
+            shutil.rmtree(subfolder_path)  # Delete the subfolder
+
+
+
+def save_layer_weights(model, model_path):
+    """
+    Saves the current weights of all defined layers to the given path.
+    """
+    for layer_name, layer in model.named_children():
+        layer_weights_path = os.path.join(model_path, f"{layer_name}.pth")
+        try:
+            torch.save(layer.state_dict(), layer_weights_path)
+            print(f"Saved weights for layer '{layer_name}' to {layer_weights_path}")
+        except Exception as e:
+            print(f"Failed to save weights for layer '{layer_name}': {e}")
+
+
 def convert_labels_to_km(labels):
     km_labels = []
     for label in labels:
@@ -73,44 +105,6 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blu
         print(f"Confusion matrix saved to {save_path}")
     else:
         plt.show()
-
-
-
-# def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues, save_path=None):
-#     """
-#     This function prints and plots the confusion matrix.
-#     Normalization can be applied by setting `normalize=True`.
-#     """
-#     if normalize:
-#         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-#         # print("Normalized confusion matrix")
-
-
-#     plt.figure(figsize=(10, 6))
-#     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-#     plt.title(title)
-#     plt.colorbar()
-#     tick_marks = np.arange(len(classes))
-#     plt.xticks(tick_marks, classes, rotation=45)
-#     plt.yticks(tick_marks, classes)
-
-#     fmt = '.2f' if normalize else 'd'
-#     thresh = cm.max() / 2.
-#     for i in range(cm.shape[0]):
-#         for j in range(cm.shape[1]):
-#             plt.text(j, i, format(cm[i, j], fmt),
-#                      ha="center", va="center",
-#                      color="white" if cm[i, j] > thresh else "black")
-
-#     plt.tight_layout()
-#     plt.xlabel('Predicted label')
-#     plt.ylabel('True label')
-
-#     if save_path:
-#         plt.savefig(save_path)
-#         print(f"Confusion matrix saved to {save_path}")
-#     else:
-#         plt.show()
 
 def _sort_description(desc):
     """Helper function to sort descriptions based on distance."""
@@ -321,22 +315,22 @@ import math
 
 
 
-def custom_growth(x,a,b):
+def custom_growth(x,param_a,param_b):
     if x < 0.625:
         # Linear growth from 0 to 0.625, reaching a value of 0.2 at x = 0.625
-        return (0.2 / b) * x
+        return (0.2 / param_b) * x
     elif x <= 1:
         # Exponential growth from 0.625 to 1, reaching a value of 1 at x = 1
         # a = 5  # Adjust this parameter to control the steepness of the exponential growth
-        return 0.2 + (1 - 0.2) * (1 - np.exp(-a * (x - b))) / (1 - np.exp(-a * (1 - b)))
+        return 0.2 + (1 - 0.2) * (1 - np.exp(-param_a * (x - param_b))) / (1 - np.exp(-param_a * (1 - param_b)))
     else:
         # Beyond x = 1, keep the function constant at 1
         return 1
 
-def mse_loss(y_true, y_pred):
+def L2_loss(y_true, y_pred):
     return (abs(y_true - y_pred)/10) ** 2
 
-def similarity(label_to_id,device,a,b,distance_weight = 0, speed_weight = 0,activity_weight = 0,vessel_type_weight=0):
+def similarity(label_to_id,device,param_a,param_b, L2=False, distance_weight = 0, speed_weight = 0,activity_weight = 0,vessel_type_weight=0):
 
     classes = label_to_id 
 
@@ -352,8 +346,11 @@ def similarity(label_to_id,device,a,b,distance_weight = 0, speed_weight = 0,acti
             distance_j, speed_j, activity_j, vessel_type_j = extract_features(class_j)
             distance_similarity = 1 - abs(distance_i - distance_j) / 10
             # distance_similarity = sim_calculator(distance_similarity)
-            distance_similarity = custom_growth(distance_similarity,a,b)
-            # distance_similarity=mse_loss(distance_i, distance_j)
+            if L2:
+                distance_similarity=1-L2_loss(distance_i, distance_j)
+            else:
+                distance_similarity = custom_growth(distance_similarity,float(param_b),float(param_b))
+
 
             speed_similarity = 1 if speed_i == speed_j else 0
             activity_similarity = 1 if activity_i == activity_j else 0
@@ -388,10 +385,16 @@ def metrics_calculator(similarity_matrix,logits,metrics,y):
     
     values_tensor=similarity_matrix[y]
     max_positions=torch.argmax(logits, dim=1)
-    # print("values_tensor shape:", values_tensor.shape)
-    # print("max_positions shape:", max_positions.shape)
-    # print("values_tensor size(0):", values_tensor.size(0))
+
 
     predics=values_tensor[torch.arange(values_tensor.size(0)), max_positions]
-    metrics.extend(predics.tolist())
+
+    # Sum each row in the `values` tensor
+    row_sums = values_tensor.sum(dim=1)  # Sum along columns (dim=1)
+    
+    # Divide each number in `pred` by the corresponding row sum
+    percentage = predics / row_sums
+
+    
+    metrics.extend(percentage.tolist())
     return metrics

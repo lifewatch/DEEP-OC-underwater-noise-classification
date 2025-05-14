@@ -384,9 +384,9 @@ def eval_pytorch_model_dclde(model, dataloader, device,desc,weights,ids,similari
 
 
 import os
-# wavs_folder=r'\\fs\shared\onderzoek\6. Marine Observation Center\Projects\IMAGINE\UC6\data\data_per_station_10_vessel_information_point'
-# d_train_path= r"\\fs\shared\onderzoek\6. Marine Observation Center\Projects\IMAGINE\UC6\ds_split-CLAP\train.txt"
-# d_valid_path= r"\\fs\shared\onderzoek\6. Marine Observation Center\Projects\IMAGINE\UC6\ds_split-CLAP\val.txt"
+# wavs_folder=r'..\..UC6\data\data_per_station_10_vessel_information_point'
+# d_train_path= r"..\..UC6\ds_split-CLAP\train.txt"
+# d_valid_path= r"..\..UC6\ds_split-CLAP\val.txt"
 
 # split = np.genfromtxt(d_train_path, dtype='str', delimiter=' ')
 # d_train_loc = np.array([os.path.join(wavs_folder, i) for i in split[:, 0]])
