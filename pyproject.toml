@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio_vessel_classifier"
+authors = [
+    { name = "wout decrop", email = "wout.decrop@vliz.be" },
+]
+description = ""
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: AI/ML/DL Researchers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+dynamic = ["version", "dependencies"]
+
+[project.urls]
+"Homepage" = "https://github.com/ai4os-hub/audio_vessel_classifier"
+"Bug Tracker" = "https://github.com/ai4os-hub/audio_vessel_classifier/issues"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+env = [
+    "AUDIO_VESSEL_CLASSIFIER_DATA_PATH=tests/data",
+    "AUDIO_VESSEL_CLASSIFIER_MODELS_PATH=tests/models",
+]
+# Allow test files to share names
+# https://docs.pytest.org/en/7.1.x/explanation/goodpractices.html
+addopts = "--import-mode=importlib"
+
+[tool.setuptools]
+packages = [ "audio_vessel_classifier" ]
+
+[tool.setuptools.package-dir]
+"audio_vessel_classifier" = "audio_vessel_classifier"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+version = { file = "VERSION" }
+
+[project.entry-points."deepaas.v2.model"]
+audio_vessel_classifier = "audio_vessel_classifier.api"

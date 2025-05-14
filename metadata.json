@@ -1,27 +1,30 @@
 {
-    "title": "Train an underwater-noise-classification (VLIZ)",
-    "summary": "Train your own underwater-noise-classifier with your custom dataset to idenity ships  ",
-    "description": [""],
+    "title": "audio_vessel_classifier",
+    "summary": "",
+    "description": [
+        "audio_vessel_classifier is an application using the DEEPaaS API.\n",
+        ""
+    ],
     "keywords": [
-        "tensorflow", "docker", "deep learning", "trainable", "inference", "pre-trained", "api-v2", "underwater-noise", "vo.imagine-ai.eu"
+        "docker",
+        "api-v2"
     ],
     "license": "MIT",
-    "cite_url": "https://arxiv.org/pdf/1803.02353.pdf",
-    "dataset_url": "https://research.google.com/audioset",
-    "training_files_url": "https://cephrgw01.ifca.es:8080/swift/v1/underwater-noise-classification/",
-    "date_creation": "2023-12-05",
+    "date_creation": "2025-05-14",
+    "dataset_url": "http://add-some-url-pointing-to-your-dataset.com",
     "sources": {
-		"dockerfile_repo": "https://github.com/lifewatch/DEEP-OC-underwater-noise-classification",
-		"docker_registry_repo": "deephdc/deep-oc-underwater-noise-classification",
-		"code": "http://github.com/lifewatch/underwater-noise-classification"
-	},
+		"dockerfile_repo": "https://github.com/ai4os-hub/audio_vessel_classifier",
+		"docker_registry_repo": "ai4oshub/audio_vessel_classifier",
+		"code": "https://github.com/ai4os-hub/audio_vessel_classifier",
+		"ai4_template": "ai4-template/2.2.0"
+    },
     "continuous_integration": {
-        "build_status_badge": "https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code/UC-lifewatch-DEEP-OC-org/DEEP-OC-underwater-noise-classification/master",
-        "build_status_url": "https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEP-OC-org/job/UC-lifewatch-DEEP-OC-underwater-noise-classification/job/master"
+        "build_status_badge": "https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio_vessel_classifier/main",
+        "build_status_url": "https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio_vessel_classifier/job/main/"
     },
     "tosca": [
         {
-            "title": "Marathon default",
+            "title": "Mesos (CPU)",
             "url": "https://raw.githubusercontent.com/indigo-dc/tosca-templates/master/deep-oc/deep-oc-marathon-webdav.yml",
             "inputs": [
                 "rclone_conf",
