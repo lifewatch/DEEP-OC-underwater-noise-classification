@@ -23,6 +23,10 @@ audio_vessel_classifier.egg-info/dependency_links.txt
 audio_vessel_classifier.egg-info/entry_points.txt
 audio_vessel_classifier.egg-info/requires.txt
 audio_vessel_classifier.egg-info/top_level.txt
+audio_vessel_classifier/__pycache__/__init__.cpython-312.pyc
+audio_vessel_classifier/__pycache__/api.cpython-312.pyc
+audio_vessel_classifier/__pycache__/config.cpython-312.pyc
+audio_vessel_classifier/__pycache__/misc.cpython-312.pyc
 data/.gitignore
 models/.gitignore
 tests/__init__.py
