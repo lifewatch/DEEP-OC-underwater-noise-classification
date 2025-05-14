@@ -100,13 +100,20 @@ ENV SHELL /bin/bash
 RUN apt update && \
     apt install -y ffmpeg libavcodec-extra
 
+
 # Install user app
-RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
+RUN git clone -b $branch --depth 1 https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
     cd  DEEP-OC-underwater-noise-classification && \
-    pip install --no-cache-dir -e . && \
-    rm -rf /root/.cache/pip/* && \
-    rm -rf /tmp/* && \
+    pip install --ignore-installed blinker -e .  && \
     cd ..
+
+# # Install user app
+# RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
+#     cd  DEEP-OC-underwater-noise-classification && \
+#     pip install --no-cache-dir -e . && \
+#     rm -rf /root/.cache/pip/* && \
+#     rm -rf /tmp/* && \
+#     cd ..
 
 # Open DEEPaaS port
 EXPOSE 5000
