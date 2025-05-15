@@ -9,44 +9,72 @@ By convention, the CONSTANTS defined in this module are in UPPER_CASE.
 import logging
 import os
 from importlib import metadata
-
 import yaml
 
-# Get AI model metadata from pyproject.toml
+# Constants
 API_NAME = "audio_vessel_classifier"
-PACKAGE_METADATA = metadata.metadata(API_NAME)  # .json
+DEFAULT_METADATA_FILENAME = "ai4-metadata.yml"
 
-# Get ai4-metadata.yaml metadata
+# Get current working directory and possible metadata env variable
 CWD = os.getcwd()
-AI4_METADATA_DIR = os.getenv(f"{API_NAME.capitalize()}_AI4_METADATA_DIR")
-if AI4_METADATA_DIR is None:
-    if "ai4-metadata.yml" in os.listdir(f"{CWD}/{API_NAME}"):
-        AI4_METADATA_DIR = f"{CWD}/{API_NAME}"
-    elif "ai4-metadata.yml" in os.listdir(f"{CWD}/../{API_NAME}"):
-        AI4_METADATA_DIR = f"{CWD}/../{API_NAME}"
+AI4_METADATA_DIR = os.getenv(f"{API_NAME.upper()}_AI4_METADATA_DIR")
 
-# Open ai4-metadata.yml
-_file = f"{AI4_METADATA_DIR}/ai4-metadata.yml"
-with open(_file, "r", encoding="utf-8") as stream:
-    AI4_METADATA = yaml.safe_load(stream)
+# Fallback logic to locate ai4-metadata.yml
+def find_metadata_path():
+    # 1. Check env var
+    if AI4_METADATA_DIR and os.path.isfile(os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)):
+        return AI4_METADATA_DIR
 
-# Project metadata
-PROJECT_METADATA = {
-  "name": PACKAGE_METADATA["Name"],
-  "description": AI4_METADATA["description"],
-  "license": PACKAGE_METADATA["License"],
-  "version":  PACKAGE_METADATA["Version"],
-  "url":  PACKAGE_METADATA["Project-URL"],
-}
+    # 2. Check current directory
+    possible_path = os.path.join(CWD, DEFAULT_METADATA_FILENAME)
+    if os.path.isfile(possible_path):
+        return CWD
 
-# Fix metadata for authors and emails from pyproject parsing
-_EMAILS_LIST = PACKAGE_METADATA["Author-email"].split(", ")
-_EMAILS = dict(map(lambda s: s[:-1].split(" <"), _EMAILS_LIST))
-PROJECT_METADATA["author-email"] = _EMAILS
-_AUTHOR = ", ".join(PROJECT_METADATA["author-email"].keys())
-PROJECT_METADATA["author"] = _AUTHOR
+    # 3. Check subfolder with API_NAME
+    subdir = os.path.join(CWD, API_NAME)
+    if os.path.isfile(os.path.join(subdir, DEFAULT_METADATA_FILENAME)):
+        return subdir
 
-# logging level across API modules can be setup via API_LOG_LEVEL,
-# options: DEBUG, INFO(default), WARNING, ERROR, CRITICAL
+    # 4. Check parent folder
+    parent_dir = os.path.abspath(os.path.join(CWD, "..", API_NAME))
+    if os.path.isfile(os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)):
+        return parent_dir
+
+    raise FileNotFoundError(f"Could not find {DEFAULT_METADATA_FILENAME} in expected locations.")
+
+# Try to load YAML metadata
+try:
+    AI4_METADATA_DIR = find_metadata_path()
+    metadata_file_path = os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)
+    with open(metadata_file_path, "r", encoding="utf-8") as stream:
+        AI4_METADATA = yaml.safe_load(stream)
+except Exception as e:
+    raise RuntimeError(f"Error loading AI4 metadata: {e}")
+
+# Try to load package metadata from pyproject.toml
+try:
+    PACKAGE_METADATA = metadata.metadata(API_NAME)
+except metadata.PackageNotFoundError:
+    raise RuntimeError(f"Package metadata for '{API_NAME}' not found. Is it installed?")
+
+# Build PROJECT_METADATA dict
+try:
+    PROJECT_METADATA = {
+        "name": PACKAGE_METADATA["Name"],
+        "description": AI4_METADATA.get("description", "No description provided."),
+        "license": PACKAGE_METADATA["License"],
+        "version": PACKAGE_METADATA["Version"],
+        "url": PACKAGE_METADATA.get("Project-URL", "N/A"),
+    }
+
+    # Parse authors and emails
+    _emails_list = PACKAGE_METADATA.get("Author-email", "").split(", ")
+    _emails = dict(map(lambda s: s[:-1].split(" <"), _emails_list)) if _emails_list[0] else {}
+    PROJECT_METADATA["author-email"] = _emails
+    PROJECT_METADATA["author"] = ", ".join(_emails.keys()) if _emails else "Unknown"
+except Exception as e:
+    raise RuntimeError(f"Error building PROJECT_METADATA: {e}")
+
+# Logging configuration
 ENV_LOG_LEVEL = os.getenv("API_LOG_LEVEL", default="INFO")
-LOG_LEVEL = getattr(logging, ENV_LOG_LEVEL.upper())
+LOG_LEVEL = getattr(logging, ENV_LOG_LEVEL.upper(), logging.INFO)

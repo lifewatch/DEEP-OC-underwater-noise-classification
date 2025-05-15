@@ -15,8 +15,16 @@ tox.ini
 .sqa/docker-compose.yml
 audio_vessel_classifier/__init__.py
 audio_vessel_classifier/api.py
+audio_vessel_classifier/clap_test.py
+audio_vessel_classifier/clap_trainer.py
 audio_vessel_classifier/config.py
+audio_vessel_classifier/create_embeddings.py
+audio_vessel_classifier/dataset.py
+audio_vessel_classifier/filterbank.py
 audio_vessel_classifier/misc.py
+audio_vessel_classifier/models.py
+audio_vessel_classifier/splitting_data.py
+audio_vessel_classifier/utils.py
 audio_vessel_classifier.egg-info/PKG-INFO
 audio_vessel_classifier.egg-info/SOURCES.txt
 audio_vessel_classifier.egg-info/dependency_links.txt

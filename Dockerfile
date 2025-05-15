@@ -10,7 +10,8 @@
 # Be Aware! For the Jenkins CI/CD pipeline, 
 # input args are defined inside the JenkinsConstants.groovy, not here!
 
-ARG tag=1.7.0-cuda11.0-cudnn8-devel
+ARG tag=2.1.0-cuda11.8-cudnn8-runtime
+ARG tag=2.7.0-cuda11.8-cudnn9-runtime
 # Base image, e.g. tensorflow/tensorflow:2.9.1
 FROM pytorch/pytorch:${tag}
 # FROM pytorch/pytorch:2.2.0-cpu
@@ -21,24 +22,30 @@ LABEL version='0.0.1'
 # 
 
 # What user branch to clone [!]
-ARG branch=main
+ARG branch=master
 
 # Install Ubuntu packages
 # - gcc is needed in Pytorch images because deepaas installation might break otherwise (see docs) (it is already installed in tensorflow images)
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub \
- && DEBIAN_FRONTEND=noninteractive apt-get update \
- && apt-get install -y --no-install-recommends \
-        gcc \
-        git \
-        curl \
-        nano \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg \
+    gcc \
+    git \
+    curl \
+    nano && \
+    rm -rf /var/lib/apt/lists/*
+
 
 
 # Update python packages
 # [!] Remember: DEEP API V2 only works with python>=3.6
-RUN python3 --version && \
-    pip3 install --no-cache-dir --upgrade pip "setuptools<60.0.0" wheel
+# Install pip
+RUN apt-get update && apt-get install -y python3-pip
+
+# Now run the python3 --version and pip installation
+RUN python3 -m pip install --no-cache-dir --upgrade pip "setuptools<60.0.0" wheel && \
+    python3 -m pip --version && \
+    python3 -m pip show setuptools
+
 
 # TODO: remove setuptools version requirement when [1] is fixed
 # [1]: https://github.com/pypa/setuptools/issues/3301
@@ -72,8 +79,8 @@ RUN git clone https://github.com/ai4os/deep-start /srv/.deep-start && \
 ENV SHELL /bin/bash
 
 # Install user app
-RUN git clone -b $branch https://github.com/ai4os-hub/audio_vessel_classifier && \
-    cd  audio_vessel_classifier && \
+RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
+    cd  DEEP-OC-underwater-noise-classification && \
     pip3 install --no-cache-dir -e . && \
     cd ..
 
