@@ -1,0 +1,20 @@
+
+
+#####################################################
+#  Options about monitoring your training
+#####################################################
+
+monitor:
+
+  use_tensorboard:
+    value: True
+    type: "bool"
+    help: >
+          Use tensorboard to visualize the relevant metrics during the training process.
+
+  use_remote:
+    value: False
+    type: "bool"
+    help: >
+          Forward the logs through a defined port if executing in a remote machine.
+

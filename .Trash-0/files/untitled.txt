@@ -1,0 +1,109 @@
+
+def get_predict_args():
+    parser = OrderedDict()
+    default_conf = config.CONF
+    default_conf = OrderedDict([("testing", default_conf["testing"])])
+
+
+    parser["pt"] = fields.Field(
+        required=False,
+        load_default=None,
+        # type="file",
+        data_key="pt",
+        #  location="form",
+        metadata={
+            "description": "Select the embedding.",
+            "type": "file",
+            "location": "form",
+        },
+    )
+
+    return populate_parser(parser, default_conf)
+
+
+
+
+
+
+def predict_from_embedding(embedding_path,conf):
+    """
+    Predict class probabilities from a saved embedding tensor.
+
+    Args:
+        embedding_path (str or Path): Path to a .pt or .pth file containing the embedding tensor.
+
+    Returns:
+        List[float]: Softmax probabilities over the 11 classes.
+    """
+    device = return_device()
+    try:
+        # Lees direct vanuit het UploadedFile object (dat file-achtig is)
+        embedding_bytes = embedding_path.read()
+        
+        import io
+        import torch
+
+        buffer = io.BytesIO(embedding_bytes)
+        x = torch.load(buffer, map_location="cpu")  # of "cuda" als beschikbaar
+
+        # Verder verwerken van x en return
+        ...
+    except Exception as e:
+        raise RuntimeError(f"Failed to load embedding from uploaded file: {e}")
+
+    x = x.to(device).squeeze(1)
+
+    # Load CLAP model (with projection)
+    clap_model = ClapAudioModelWithProjection.from_pretrained(
+        "/srv/DEEP-OC-underwater-noise-classification/models/fine_tuning/model"
+    ).to(device)
+    clap_model.eval()
+
+    # Load the linear classification head
+    linear_model = nn.Linear(in_features=512, out_features=11)
+    linear_model.load_state_dict(torch.load(
+        "/srv/DEEP-OC-underwater-noise-classification/models/fine_tuning/model/linear.pth",
+        map_location=device
+    ))
+    linear_model = linear_model.to(device)
+    linear_model.eval()
+
+    # Run prediction
+    with torch.no_grad():
+        embeddings = clap_model(x).audio_embeds.to(device)  # Shape: (1, 512)
+        out = linear_model(embeddings)  # Shape: (1, 11)
+        print(out)
+        predicted_number = out.argmax(dim=1).cpu().numpy()
+        print(predicted_number)
+    return probs
+
+
+def predict_data(args):
+    """
+    Function to predict from an input tensor in args["file"]
+    """
+    logger.debug("Predict with args: %s", args)
+    try:
+        update_with_query_conf(args)
+        conf = config.conf_dict
+        # Check which input is provided
+        if "embedding_file" in args and args["embedding_file"] is not None:
+            logger.debug("Using embedding file for prediction.")
+            print(args["embedding_file"])
+            return predict_from_embedding(args["embedding_file"], conf)
+
+        elif "audio_file" in args and args["audio_file"] is not None:
+            logger.debug("Using audio file for prediction.")
+            return predict_from_audio(args["audio_file"], conf)
+
+        else:
+            raise ValueError("No valid input provided. Please upload either an embedding file or an audio file.")
+
+        
+
+        return out
+
+
+        return out
+    except Exception as err:
+        raise HTTPException(reason=err) from err

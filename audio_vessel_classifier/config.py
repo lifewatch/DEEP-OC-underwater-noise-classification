@@ -10,6 +10,76 @@ import logging
 import os
 from importlib import metadata
 import yaml
+import builtins
+
+homedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+conf_path = os.path.join(homedir, "etc", "config.yaml")
+with open(conf_path, "r") as f:
+    CONF = yaml.safe_load(f)
+
+
+def check_conf(conf=CONF):
+    """
+    Checks for configuration parameters
+    """
+    for group, val in sorted(conf.items()):
+        for g_key, g_val in sorted(val.items()):
+            gg_keys = g_val.keys()
+
+            if g_val["value"] is None:
+                continue
+
+            if "type" in gg_keys:
+                var_type = getattr(builtins, g_val["type"])
+                if not isinstance(g_val["value"], var_type):
+                    raise TypeError(
+                        "The selected value for {} must be a {}.".format(
+                            g_key, g_val["type"]
+                        )
+                    )
+
+            if ("choices" in gg_keys) and (
+                g_val["value"] not in g_val["choices"]
+            ):
+                raise ValueError(
+                    "The selected value for {} is not an available choice.".format(
+                        g_key
+                    )
+                )
+
+            if "range" in gg_keys:
+                if (g_val["range"][0] is not None) and (
+                    g_val["range"][0] > g_val["value"]
+                ):
+                    raise ValueError(
+                        "The selected value for {} is lower than the minimal possible value.".format(
+                            g_key
+                        )
+                    )
+
+                if (g_val["range"][1] != "None") and (
+                    g_val["range"][1] < g_val["value"]
+                ):
+                    raise ValueError(
+                        "The selected value for {} is higher than the maximal possible value.".format(
+                            g_key
+                        )
+                    )
+
+check_conf()
+def get_conf_dict(conf=CONF):
+    """
+    Return configuration as dict
+    """
+    conf_d = {}
+    for group, val in conf.items():
+        conf_d[group] = {}
+        for g_key, g_val in val.items():
+            conf_d[group][g_key] = g_val["value"]
+
+    return conf_d
+
+
 
 # Constants
 API_NAME = "audio_vessel_classifier"
@@ -78,3 +148,12 @@ except Exception as e:
 # Logging configuration
 ENV_LOG_LEVEL = os.getenv("API_LOG_LEVEL", default="INFO")
 LOG_LEVEL = getattr(logging, ENV_LOG_LEVEL.upper(), logging.INFO)
+
+
+
+
+
+
+
+
+

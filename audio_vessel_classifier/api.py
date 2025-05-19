@@ -24,29 +24,27 @@ an exemplar module [2].
 [2]: https://github.com/ai4os-hub/ai4os-demo-app
 """
 
-from pathlib import Path
+
 import logging
 import builtins
+
+import json
+
+import torch
+import torch.nn.functional as F
+import torchaudio
+
+from transformers import AutoProcessor, ClapModel, ClapAudioModelWithProjection, ClapProcessor
+
+from aiohttp.web import HTTPException
+from webargs import fields, validate
+
 from audio_vessel_classifier import config
 from audio_vessel_classifier.misc import _catch_error
-from transformers import AutoProcessor, ClapModel, ClapAudioModelWithProjection, ClapProcessor
-from aiohttp.web import HTTPException
-import yaml
-import os
-import torch
-import json
-from torch import nn
-from collections import OrderedDict
-from webargs import fields
+from audio_vessel_classifier.models import model_loader
 
-# set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(config.LOG_LEVEL)
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-
-
-@_catch_error
 def get_metadata():
     """Returns a dictionary containing metadata information about the module.
        DO NOT REMOVE - All modules should have a get_metadata() function
@@ -68,66 +66,96 @@ def get_metadata():
         raise  # Reraise the exception after log
 
 
-@catch_error
 def predict(**args):
     logger.debug("Predict with args: %s", args)
     try:
-        if not any([args["pt"]]):
+        if not any([args.get("embedding_file"), args.get("audio_file")]):
+
             raise Exception(
-                "You must provide  '.pt' in the payload"
+                "You must provide  '.pt' or '.wav' in the payload"
             )
 
         return predict_data(args)
 
     except Exception as err:
         raise HTTPException(reason=err) from err
-def return_device():
-    if torch.cuda.is_available():
-        device = torch.device('cuda')
-        print(f"Selected CUDA device: {torch.cuda.get_device_name(device)}")
-    else:
-        print("CUDA is not available. Using CPU.")
-        device = torch.device('cpu')
-    return device
 
-    
+
+
+def load_and_prepare_waveform(wav_path, duration=10, desired_fs=48000, channel=0):
+    waveform_info = torchaudio.info(wav_path)
+    waveform, fs = torchaudio.load(wav_path)
+
+    if waveform_info.sample_rate != desired_fs:
+        resampler = torchaudio.transforms.Resample(fs, desired_fs)
+        waveform = resampler(waveform)
+
+    max_samples = int(duration * desired_fs)
+    waveform = waveform[channel, :max_samples]
+
+    if waveform.shape[0] < max_samples:
+        waveform = F.pad(waveform, (0, max_samples - waveform.shape[0]))
+
+    return waveform.cpu().numpy(), desired_fs
+
+def get_clap_embedding(x_np, desired_fs, freeze, device):
+    processor = ClapProcessor.from_pretrained("davidrrobinson/BioLingual")
+    clap = ClapAudioModelWithProjection.from_pretrained("davidrrobinson/BioLingual").to(device)
+
+    inputs = processor(audios=[x_np], return_tensors="pt", sampling_rate=desired_fs, padding=True)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        if freeze:
+            return clap(**inputs).audio_embeds
+        else:
+            return inputs["input_features"]
+
+def run_prediction(embedding, model, freeze, device):
+    model.eval()
+    with torch.no_grad():
+        embedding = embedding.to(device)
+        output = model(embedding)[0] if freeze else model(embedding)
+        predicted_class = torch.argmax(output, dim=1).item()
+        probabilities = F.softmax(output, dim=1).squeeze().cpu().tolist()
+    return predicted_class, probabilities
+
 def predict_data(args):
-    """
-    Function to predict from an input tensor in args["file"]
-    """
-    logger.debug("Predict with args: %s", args)
-    try:
-        update_with_query_conf(args)
-        conf = config.conf_dict
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    freeze = args.get("model_choice") != "fine_tuning"
+    embedded = False
 
-        x = args["file"]
-        device = return_device()
-        x = x.to(device).squeeze(1)
+    if args.get("embedding_file"):
+        embedded = True
 
-        # Load models
-        clap_model = ClapAudioModelWithProjection.from_pretrained(
-            "/srv/DEEP-OC-underwater-noise-classification/models/fine_tuning/model"
-        ).to(device)
-        
-        # Load linear layer (assuming it's a state_dict)
-        linear_model =nn.Linear(in_features=512, out_features=11) # adjust dimensions as needed
-        linear_model.load_state_dict(torch.load(
-            "/srv/DEEP-OC-underwater-noise-classification/models/fine_tuning/model/linear.pth",
-            map_location=device
-        ))
-        linear_model = linear_model.to(device)
-        linear_model.eval()
+    if args.get("audio_file"):
+        wav_path = wav_path = args["audio_file"].filename  # Extract the temp file path
+ # path from args, not hardcoded
+        x_np, desired_fs = load_and_prepare_waveform(wav_path)
+        embedding = get_clap_embedding(x_np, desired_fs, freeze, device)
+        embedded = True
 
-        with torch.no_grad():
-            x = clap_model(x).audio_embeds.to(device)
-            out = linear_model(x)
+    if embedded:
+        logger.debug("Predict with args: %s", args)
+        try:
+            update_with_query_conf(args)
+            conf = config.conf_dict
 
-        return out
+            if "embedding_file" in args and args["embedding_file"] is not None:
+                uploaded_file = args["embedding_file"]
+                embedding = torch.load(uploaded_file.filename, map_location="cpu")
+
+            model = model_loader(device, freeze)
+            return run_prediction(embedding, model, freeze, device)
+
+        except Exception as e:
+            logger.exception("Error during prediction")
+            return {"error": str(e)}
+    else:
+        return {"error": "No audio or embedding file provided"}
 
 
-        return out
-    except Exception as err:
-        raise HTTPException(reason=err) from err
+
 
 def update_with_query_conf(user_args):
     """
@@ -152,27 +180,44 @@ def update_with_query_conf(user_args):
     config.conf_dict = config.get_conf_dict(conf=CONF)
 
 
-
 def get_predict_args():
-    parser = OrderedDict()
-    default_conf = config.CONF
-    default_conf = OrderedDict([("testing", default_conf["testing"])])
+    """
+    TODO: add more dtypes
+    * int with choices
+    * composed: list of strs, list of int
+    """
+    # WARNING: missing!=None has to go with required=False
+    # fmt: off
+    arg_dict = {
+        "model_choice": fields.Str(
+            required=False,
+            missing="fine_tuning",
+            enum=["fine_tuning", "feature_extraction"],
+            description="test multi-choice with strings",
+        ),
+       
+        "embedding_file": fields.Field(
+            required=False,
+            format="binary",
+            type="file",
+            location="form",
+            description="test image upload",  # "image" word in description is needed to be parsed by Gradio UI
+        ),
+        "audio_file": fields.Field(
+            required=False,
+            type="file",
+            location="form",
+            description="test audio upload",  # "audio" word in description is needed to be parsed by Gradio UI
+        ),
+        # Add format type of the response of predict()
+        # For demo purposes, we allow the user to receive back either JSON, image or zip.
+        # More options for MIME types: https://mimeapplication.net/
+    }
+    # fmt: on
+    return arg_dict
 
 
-    parser["pt"] = fields.Field(
-        required=False,
-        load_default=None,
-        # type="file",
-        data_key="pt",
-        #  location="form",
-        metadata={
-            "description": "Select the embedding.",
-            "type": "file",
-            "location": "form",
-        },
-    )
 
-    return populate_parser(parser, default_conf)
 
 
 def populate_parser(parser, default_conf):
@@ -223,22 +268,3 @@ def populate_parser(parser, default_conf):
             parser[g_key] = fields.Str(**opt_args)
 
     return parser    
-# def warm():
-#     pass
-#
-#
-# def get_predict_args():
-#     return {}
-#
-#
-# @_catch_error
-# def predict(**kwargs):
-#     return None
-#
-#
-# def get_train_args():
-#     return {}
-#
-#
-# def train(**kwargs):
-#     return None

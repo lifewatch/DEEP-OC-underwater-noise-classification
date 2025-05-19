@@ -79,8 +79,9 @@ RUN git clone https://github.com/ai4os/deep-start /srv/.deep-start && \
 ENV SHELL /bin/bash
 
 # Install user app
-RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification && \
-    cd  DEEP-OC-underwater-noise-classification && \
+RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification 
+RUN python3 -m pip install --upgrade pip==23.3.1 && \
+    cd DEEP-OC-underwater-noise-classification && \
     pip3 install --no-cache-dir -e . && \
     cd ..
 
