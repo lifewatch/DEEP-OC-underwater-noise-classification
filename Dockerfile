@@ -21,7 +21,7 @@ LABEL version='0.0.1'
 # 
 
 # What user branch to clone [!]
-ARG branch=main
+ARG branch=testing_docker
 
 # Install Ubuntu packages
 # - gcc is needed in Pytorch images because deepaas installation might break otherwise (see docs) (it is already installed in tensorflow images)
