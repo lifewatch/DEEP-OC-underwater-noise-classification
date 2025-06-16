@@ -111,6 +111,7 @@ def get_clap_embedding(x_np, desired_fs, freeze, device):
         else:
             return inputs["input_features"]
 
+
 def run_prediction(embedding, model, freeze, device):
     model.eval()
     with torch.no_grad():
