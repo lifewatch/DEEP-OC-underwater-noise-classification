@@ -39,6 +39,7 @@ RUN pip install "pip<24.1" && \
     pip install --no-cache-dir -e .
 
     
+    
 # Install Ubuntu packages
 # - gcc is needed in Pytorch images because deepaas installation might break otherwise (see docs) (it is already installed in tensorflow images)
 RUN apt-get update && apt-get install -y --no-install-recommends \
