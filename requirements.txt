@@ -80,7 +80,7 @@ zipp==3.17.0
 # omegaconf==2.3.0
 # Cython>=0.29
 
+omegaconf==2.2.2
 hydra-core==1.3.2
-omegaconf==2.0.6
 PyYAML>=5.4.1  # or keep 5.1.2 if you prefer
 
