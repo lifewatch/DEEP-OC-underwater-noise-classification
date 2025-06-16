@@ -41,7 +41,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y python3-pip
 
 # Now run the python3 --version and pip installation
-RUN python3 -m pip install --no-cache-dir --upgrade pip "setuptools<60.0.0" wheel && \
+RUN pip install --upgrade pip \
+   python3 -m pip install --no-cache-dir --upgrade pip "setuptools<60.0.0" wheel && \
     python3 -m pip --version && \
     python3 -m pip show setuptools
 
