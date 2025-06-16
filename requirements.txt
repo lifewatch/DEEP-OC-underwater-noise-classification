@@ -83,5 +83,5 @@ Cython>=0.29
 
 hydra-core==1.3.2
 omegaconf==2.2.2
-PyYAML==5.4.1  # or keep 5.1.2 if you prefer
+PyYAML>=5.4.1  # or keep 5.1.2 if you prefer
 
