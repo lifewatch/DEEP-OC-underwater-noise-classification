@@ -1,5 +1,5 @@
 # audio_vessel_classifier
-[![Build Status](https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio_vessel_classifier/main)](https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio_vessel_classifier/job/main/)
+[![Build Status](https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio-vessel-classification/main)](https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio-vessel-classification/job/main/)
 
 
 
