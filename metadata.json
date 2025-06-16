@@ -21,13 +21,13 @@
     "date_creation": "2025-05-14",
     "dataset_url": "https://www.vliz.be/nl/imis?dasid=8773&doiid=1154",
     "sources": {
-		"dockerfile_repo": "https://github.com/ai4os-hub/audio_vessel_classifier",
+		"dockerfile_repo": "https://github.com/ai4os-hub/audio-vessel-classification",
 		"docker_registry_repo": "ai4oshub/audio_vessel_classifier",
-		"code": "https://github.com/ai4os-hub/audio_vessel_classifier",
+		"code": "https://github.com/ai4os-hub/audio-vessel-classification",
     },
     "continuous_integration": {
-        "build_status_badge": "https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio_vessel_classifier/main",
-        "build_status_url": "https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio_vessel_classifier/job/main/"
+        "build_status_badge": "https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio_vessel_classification/main",
+        "build_status_url": "https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio-vessel-classification/job/main/"
     },
     "tosca": [
         {
