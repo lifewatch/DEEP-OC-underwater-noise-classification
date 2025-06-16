@@ -76,7 +76,7 @@ tzdata==2023.4
 urllib3==2.2.0
 Werkzeug==3.0.1
 zipp==3.17.0
-PyYAML==5.1.2
-omegaconf==2.3.0
+# PyYAML==5.1.2
+# omegaconf==2.3.0
 hydra-core>=1.4.0
 
