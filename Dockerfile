@@ -45,6 +45,9 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip "setuptools<60.0.0" whee
     python3 -m pip --version && \
     python3 -m pip show setuptools
 
+# RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+
 
 # TODO: remove setuptools version requirement when [1] is fixed
 # [1]: https://github.com/pypa/setuptools/issues/3301
@@ -78,7 +81,7 @@ RUN git clone https://github.com/ai4os/deep-start /srv/.deep-start && \
 ENV SHELL /bin/bash
 
 # Install user app
-RUN git clone -b $branch https://github.com/lifewatch/DEEP-OC-underwater-noise-classification 
+RUN git clone -b $branch https://github.com/ai4os-hub/phyto-plankton-classification
 RUN python3 -m pip install --upgrade pip==23.3.1 && \
     cd DEEP-OC-underwater-noise-classification && \
     pip3 install --no-cache-dir -e . && \
