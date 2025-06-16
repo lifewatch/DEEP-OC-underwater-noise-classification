@@ -28,10 +28,15 @@ ENV SHELL /bin/bash
 # What user branch to clone [!]
 ARG branch=testing_docker
 
-RUN git clone -b $branch https://github.com/ai4os-hub/audio-vessel-classification
-RUN cd audio-vessel-classification && \
-    pip3 install --no-cache-dir -e . && \
-    cd ..
+
+# RUN git clone -b $branch https://github.com/ai4os-hub/audio-vessel-classification && \
+#     cd audio-vessel-classification && \
+#     pip3 install --no-cache-dir -e .
+
+RUN pip install "pip<24.1" && \
+    git clone -b $branch https://github.com/ai4os-hub/audio-vessel-classification && \
+    cd audio-vessel-classification && \
+    pip install --no-cache-dir -e .
 
     
 # Install Ubuntu packages
