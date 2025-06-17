@@ -1,11 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import (
-    AutoProcessor,
-    ClapModel,
-    ClapAudioModelWithProjection,
-    ClapProcessor,
-)
+from transformers import ClapAudioModelWithProjection
 
 
 class Fine_tuning_CLAPModel(nn.Module):
@@ -65,9 +60,7 @@ def model_loader(device, freeze=True):
         )
 
         relu = nn.ReLU()
-        model = Feature_extraction_CLAPModel(fc1, fc2, relu).to(
-            device
-        )
+        model = Feature_extraction_CLAPModel(fc1, fc2, relu).to(device)
         model.eval()
         return model
     else:
@@ -86,9 +79,7 @@ def model_loader(device, freeze=True):
             )
         )
         linear_model = linear_model.to(device)
-        model = Fine_tuning_CLAPModel(clap_model, linear_model).to(
-            device
-        )
+        model = Fine_tuning_CLAPModel(clap_model, linear_model).to(device)
         model.eval()
         return model
 

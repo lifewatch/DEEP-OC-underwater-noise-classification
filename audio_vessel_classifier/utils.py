@@ -1,28 +1,15 @@
-import soundfile as sf
-from torch import nn, Tensor
-from torch.utils.data import Dataset, DataLoader, dataloader
-import torchaudio
-import torch
-import numpy as np
-from scipy.signal import resample
-import torchvision.transforms.functional as F
-import torch.nn.functional as F_general
-import scipy
 import os
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-import pandas as pd
-import csv
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import re
-
 import pathlib
-
-from datetime import datetime
-
-import os
+import re
 import shutil
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn.functional as F_general
+import torchaudio
+from torch.utils.data import DataLoader
 
 
 def delete_all_subfolders(parent_dir):
@@ -45,18 +32,12 @@ def save_layer_weights(model, model_path):
     Saves the current weights of all defined layers to the given path.
     """
     for layer_name, layer in model.named_children():
-        layer_weights_path = os.path.join(
-            model_path, f"{layer_name}.pth"
-        )
+        layer_weights_path = os.path.join(model_path, f"{layer_name}.pth")
         try:
             torch.save(layer.state_dict(), layer_weights_path)
-            print(
-                f"Saved weights for layer '{layer_name}' to {layer_weights_path}"
-            )
+            print(f"Saved weights for layer '{layer_name}' to {layer_weights_path}")
         except Exception as e:
-            print(
-                f"Failed to save weights for layer '{layer_name}': {e}"
-            )
+            print(f"Failed to save weights for layer '{layer_name}': {e}")
 
 
 def convert_labels_to_km(labels):
@@ -109,11 +90,7 @@ def plot_confusion_matrix(
                 ha="center",
                 va="center",
                 fontsize=14,
-                color=(
-                    "white"
-                    if cm_percentage[i, j] > thresh
-                    else "black"
-                ),
+                color=("white" if cm_percentage[i, j] > thresh else "black"),
             )  # Adjust text color based on percentage
 
             # Display the percentage in the cell as a higher value (of the row)
@@ -121,12 +98,8 @@ def plot_confusion_matrix(
             # plt.text(j, i, percentage_text, ha="center", va="bottom", fontsize=10, color="black")  # Display percentage
 
     plt.tight_layout()
-    plt.xlabel(
-        "Predicted label", fontsize=18
-    )  # Increased x-axis label font size
-    plt.ylabel(
-        "True label", fontsize=18
-    )  # Increased y-axis label font size
+    plt.xlabel("Predicted label", fontsize=18)  # Increased x-axis label font size
+    plt.ylabel("True label", fontsize=18)  # Increased y-axis label font size
 
     if save_path:
         plt.savefig(save_path, bbox_inches="tight")
@@ -154,12 +127,8 @@ class DatasetEmbeddings(DataLoader):
         self.device = device
 
     def __len__(self):
-        embedding_type_folder = os.path.join(
-            self.folder_path, self.desc
-        )
-        return len(
-            list(pathlib.Path(embedding_type_folder).glob("*.pt"))
-        )
+        embedding_type_folder = os.path.join(self.folder_path, self.desc)
+        return len(list(pathlib.Path(embedding_type_folder).glob("*.pt")))
 
     def __getitem__(self, idx):
         embedding_path = os.path.join(
@@ -182,19 +151,13 @@ class DatasetLoadEmbeddings(DataLoader):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        embedding_path = row[
-            "embedding"
-        ]  # Directly access the path from the DataFrame
+        embedding_path = row["embedding"]  # Directly access the path from the DataFrame
 
         # Load the embedding
-        embedding = torch.load(
-            embedding_path, map_location=self.device
-        )
+        embedding = torch.load(embedding_path, map_location=self.device)
 
         # Get the label ID
-        label_tensor = torch.tensor(
-            self.label_to_id[row["label"]], dtype=torch.long
-        )
+        label_tensor = torch.tensor(self.label_to_id[row["label"]], dtype=torch.long)
 
         return embedding, label_tensor
 
@@ -236,9 +199,7 @@ class DatasetWaveform(DataLoader):
         #                                 num_frames=row['end_sample'] - row[
         #                                     'begin_sample'])
         if waveform_info.sample_rate != self.desired_fs:
-            transform = torchaudio.transforms.Resample(
-                fs, self.desired_fs
-            )
+            transform = torchaudio.transforms.Resample(fs, self.desired_fs)
             waveform = transform(waveform)
         else:
             waveform = waveform
@@ -246,9 +207,7 @@ class DatasetWaveform(DataLoader):
         max_samples = self.max_duration * self.desired_fs
         waveform = waveform[self.channel, :max_samples]
         if waveform.shape[0] < max_samples:
-            waveform = F_general.pad(
-                waveform, (0, max_samples - waveform.shape[0])
-            )
+            waveform = F_general.pad(waveform, (0, max_samples - waveform.shape[0]))
         # return wav_path torch.tensor(self.label_to_id[row['label']])
         return (
             waveform,
@@ -328,9 +287,7 @@ def process_filenames(d_train):
     df["ship_type"] = df["filename"].apply(lambda x: x.split("_")[-4])
 
     # Apply the function to create a new column 'distance_category'
-    df["distance_category"] = df["distance"].apply(
-        categorize_distance
-    )
+    df["distance_category"] = df["distance"].apply(categorize_distance)
 
     # Create a combined_info column
     # df['label'] = df['ship_type'] + ' at distance ' + df['distance_category'] + ' with speed ' + df['speed_category'] + ' is ' + df['activity']
@@ -378,7 +335,6 @@ def extract_features(class_string):
     return distance, speed, activity, vessel_type
 
 
-import math
 
 
 def custom_growth(x, param_a, param_b):
@@ -388,9 +344,9 @@ def custom_growth(x, param_a, param_b):
     elif x <= 1:
         # Exponential growth from 0.625 to 1, reaching a value of 1 at x = 1
         # a = 5  # Adjust this parameter to control the steepness of the exponential growth
-        return 0.2 + (1 - 0.2) * (
-            1 - np.exp(-param_a * (x - param_b))
-        ) / (1 - np.exp(-param_a * (1 - param_b)))
+        return 0.2 + (1 - 0.2) * (1 - np.exp(-param_a * (x - param_b))) / (
+            1 - np.exp(-param_a * (1 - param_b))
+        )
     else:
         # Beyond x = 1, keep the function constant at 1
         return 1
@@ -420,21 +376,13 @@ def similarity(
 
     # Calculate similarity between each pair of classes
     for i, class_i in enumerate(classes):
-        distance_i, speed_i, activity_i, vessel_type_i = (
-            extract_features(class_i)
-        )
+        distance_i, speed_i, activity_i, vessel_type_i = extract_features(class_i)
         for j, class_j in enumerate(classes):
-            distance_j, speed_j, activity_j, vessel_type_j = (
-                extract_features(class_j)
-            )
-            distance_similarity = (
-                1 - abs(distance_i - distance_j) / 10
-            )
+            distance_j, speed_j, activity_j, vessel_type_j = extract_features(class_j)
+            distance_similarity = 1 - abs(distance_i - distance_j) / 10
             # distance_similarity = sim_calculator(distance_similarity)
             if L2:
-                distance_similarity = 1 - L2_loss(
-                    distance_i, distance_j
-                )
+                distance_similarity = 1 - L2_loss(distance_i, distance_j)
             else:
                 distance_similarity = custom_growth(
                     distance_similarity,
@@ -444,9 +392,7 @@ def similarity(
 
             speed_similarity = 1 if speed_i == speed_j else 0
             activity_similarity = 1 if activity_i == activity_j else 0
-            vessel_type_similarity = (
-                1 if vessel_type_i == vessel_type_j else 0
-            )
+            vessel_type_similarity = 1 if vessel_type_i == vessel_type_j else 0
             # Similarity is a combination of all attributes
             similarity = (
                 distance_similarity * distance_weight
@@ -482,9 +428,7 @@ def metrics_calculator(similarity_matrix, logits, metrics, y):
     values_tensor = similarity_matrix[y]
     max_positions = torch.argmax(logits, dim=1)
 
-    predics = values_tensor[
-        torch.arange(values_tensor.size(0)), max_positions
-    ]
+    predics = values_tensor[torch.arange(values_tensor.size(0)), max_positions]
 
     # Sum each row in the `values` tensor
     row_sums = values_tensor.sum(dim=1)  # Sum along columns (dim=1)

@@ -6,11 +6,12 @@ Do not misuse this module to define variables that are not CONSTANTS.
 By convention, the CONSTANTS defined in this module are in UPPER_CASE.
 """
 
+import builtins
 import logging
 import os
 from importlib import metadata
+
 import yaml
-import builtins
 
 homedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 conf_path = os.path.join(homedir, "etc", "config.yaml")
@@ -38,9 +39,7 @@ def check_conf(conf=CONF):
                         )
                     )
 
-            if ("choices" in gg_keys) and (
-                g_val["value"] not in g_val["choices"]
-            ):
+            if ("choices" in gg_keys) and (g_val["value"] not in g_val["choices"]):
                 raise ValueError(
                     "The selected value for {} is not an available choice.".format(
                         g_key
@@ -107,16 +106,12 @@ def find_metadata_path():
 
     # 3. Check subfolder with API_NAME
     subdir = os.path.join(CWD, API_NAME)
-    if os.path.isfile(
-        os.path.join(subdir, DEFAULT_METADATA_FILENAME)
-    ):
+    if os.path.isfile(os.path.join(subdir, DEFAULT_METADATA_FILENAME)):
         return subdir
 
     # 4. Check parent folder
     parent_dir = os.path.abspath(os.path.join(CWD, "..", API_NAME))
-    if os.path.isfile(
-        os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)
-    ):
+    if os.path.isfile(os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)):
         return parent_dir
 
     raise FileNotFoundError(
@@ -127,9 +122,7 @@ def find_metadata_path():
 # Try to load YAML metadata
 try:
     AI4_METADATA_DIR = find_metadata_path()
-    metadata_file_path = os.path.join(
-        AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME
-    )
+    metadata_file_path = os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)
     with open(metadata_file_path, "r", encoding="utf-8") as stream:
         AI4_METADATA = yaml.safe_load(stream)
 except Exception as e:
@@ -139,35 +132,25 @@ except Exception as e:
 try:
     PACKAGE_METADATA = metadata.metadata(API_NAME)
 except metadata.PackageNotFoundError:
-    raise RuntimeError(
-        f"Package metadata for '{API_NAME}' not found. Is it installed?"
-    )
+    raise RuntimeError(f"Package metadata for '{API_NAME}' not found. Is it installed?")
 
 # Build PROJECT_METADATA dict
 try:
     PROJECT_METADATA = {
         "name": PACKAGE_METADATA["Name"],
-        "description": AI4_METADATA.get(
-            "description", "No description provided."
-        ),
+        "description": AI4_METADATA.get("description", "No description provided."),
         "license": PACKAGE_METADATA["License"],
         "version": PACKAGE_METADATA["Version"],
         "url": PACKAGE_METADATA.get("Project-URL", "N/A"),
     }
 
     # Parse authors and emails
-    _emails_list = PACKAGE_METADATA.get("Author-email", "").split(
-        ", "
-    )
+    _emails_list = PACKAGE_METADATA.get("Author-email", "").split(", ")
     _emails = (
-        dict(map(lambda s: s[:-1].split(" <"), _emails_list))
-        if _emails_list[0]
-        else {}
+        dict(map(lambda s: s[:-1].split(" <"), _emails_list)) if _emails_list[0] else {}
     )
     PROJECT_METADATA["author-email"] = _emails
-    PROJECT_METADATA["author"] = (
-        ", ".join(_emails.keys()) if _emails else "Unknown"
-    )
+    PROJECT_METADATA["author"] = ", ".join(_emails.keys()) if _emails else "Unknown"
 except Exception as e:
     raise RuntimeError(f"Error building PROJECT_METADATA: {e}")
 

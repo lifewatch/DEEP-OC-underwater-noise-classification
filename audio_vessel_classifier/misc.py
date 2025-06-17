@@ -4,10 +4,10 @@ across projects. They are not strictly need for integration
 but users might want nevertheless to take advantage from them.
 """
 
-from functools import wraps
-from multiprocessing import Process
 import subprocess  # nosec
 import warnings
+from functools import wraps
+from multiprocessing import Process
 
 from aiohttp.web import HTTPBadRequest
 
