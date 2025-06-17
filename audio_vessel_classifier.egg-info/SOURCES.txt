@@ -18,6 +18,7 @@ audio_vessel_classifier/api.py
 audio_vessel_classifier/config.py
 audio_vessel_classifier/misc.py
 audio_vessel_classifier/models.py
+audio_vessel_classifier/utils.py
 audio_vessel_classifier.egg-info/PKG-INFO
 audio_vessel_classifier.egg-info/SOURCES.txt
 audio_vessel_classifier.egg-info/dependency_links.txt
@@ -29,6 +30,7 @@ audio_vessel_classifier/__pycache__/api.cpython-312.pyc
 audio_vessel_classifier/__pycache__/config.cpython-312.pyc
 audio_vessel_classifier/__pycache__/misc.cpython-312.pyc
 data/.gitignore
+etc/config.yaml
 models/.gitignore
 tests/__init__.py
 tests/test_api.py

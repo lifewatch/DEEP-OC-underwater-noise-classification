@@ -34,7 +34,12 @@ import torch
 import torch.nn.functional as F
 import torchaudio
 
-from transformers import AutoProcessor, ClapModel, ClapAudioModelWithProjection, ClapProcessor
+from transformers import (
+    AutoProcessor,
+    ClapModel,
+    ClapAudioModelWithProjection,
+    ClapProcessor,
+)
 
 from aiohttp.web import HTTPException
 from webargs import fields, validate
@@ -45,6 +50,8 @@ from audio_vessel_classifier.models import model_loader
 
 logger = logging.getLogger(__name__)
 logger.setLevel(config.LOG_LEVEL)
+
+
 def get_metadata():
     """Returns a dictionary containing metadata information about the module.
        DO NOT REMOVE - All modules should have a get_metadata() function
@@ -62,14 +69,18 @@ def get_metadata():
         logger.debug("Package model metadata: %s", metadata)
         return metadata
     except Exception as err:
-        logger.error("Error collecting metadata: %s", err, exc_info=True)
+        logger.error(
+            "Error collecting metadata: %s", err, exc_info=True
+        )
         raise  # Reraise the exception after log
 
 
 def predict(**args):
     logger.debug("Predict with args: %s", args)
     try:
-        if not any([args.get("embedding_file"), args.get("audio_file")]):
+        if not any(
+            [args.get("embedding_file"), args.get("audio_file")]
+        ):
 
             raise Exception(
                 "You must provide  '.pt' or '.wav' in the payload"
@@ -81,8 +92,9 @@ def predict(**args):
         raise HTTPException(reason=err) from err
 
 
-
-def load_and_prepare_waveform(wav_path, duration=10, desired_fs=48000, channel=0):
+def load_and_prepare_waveform(
+    wav_path, duration=10, desired_fs=48000, channel=0
+):
     waveform_info = torchaudio.info(wav_path)
     waveform, fs = torchaudio.load(wav_path)
 
@@ -94,15 +106,27 @@ def load_and_prepare_waveform(wav_path, duration=10, desired_fs=48000, channel=0
     waveform = waveform[channel, :max_samples]
 
     if waveform.shape[0] < max_samples:
-        waveform = F.pad(waveform, (0, max_samples - waveform.shape[0]))
+        waveform = F.pad(
+            waveform, (0, max_samples - waveform.shape[0])
+        )
 
     return waveform.cpu().numpy(), desired_fs
 
-def get_clap_embedding(x_np, desired_fs, freeze, device):
-    processor = ClapProcessor.from_pretrained("davidrrobinson/BioLingual")
-    clap = ClapAudioModelWithProjection.from_pretrained("davidrrobinson/BioLingual").to(device)
 
-    inputs = processor(audios=[x_np], return_tensors="pt", sampling_rate=desired_fs, padding=True)
+def get_clap_embedding(x_np, desired_fs, freeze, device):
+    processor = ClapProcessor.from_pretrained(
+        "davidrrobinson/BioLingual"
+    )
+    clap = ClapAudioModelWithProjection.from_pretrained(
+        "davidrrobinson/BioLingual"
+    ).to(device)
+
+    inputs = processor(
+        audios=[x_np],
+        return_tensors="pt",
+        sampling_rate=desired_fs,
+        padding=True,
+    )
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
     with torch.no_grad():
@@ -118,11 +142,16 @@ def run_prediction(embedding, model, freeze, device):
         embedding = embedding.to(device)
         output = model(embedding)[0] if freeze else model(embedding)
         predicted_class = torch.argmax(output, dim=1).item()
-        probabilities = F.softmax(output, dim=1).squeeze().cpu().tolist()
+        probabilities = (
+            F.softmax(output, dim=1).squeeze().cpu().tolist()
+        )
     return predicted_class, probabilities
 
+
 def predict_data(args):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(
+        "cuda" if torch.cuda.is_available() else "cpu"
+    )
     freeze = args.get("model_choice") != "fine_tuning"
     embedded = False
 
@@ -130,10 +159,14 @@ def predict_data(args):
         embedded = True
 
     if args.get("audio_file"):
-        wav_path = wav_path = args["audio_file"].filename  # Extract the temp file path
- # path from args, not hardcoded
+        wav_path = wav_path = args[
+            "audio_file"
+        ].filename  # Extract the temp file path
+        # path from args, not hardcoded
         x_np, desired_fs = load_and_prepare_waveform(wav_path)
-        embedding = get_clap_embedding(x_np, desired_fs, freeze, device)
+        embedding = get_clap_embedding(
+            x_np, desired_fs, freeze, device
+        )
         embedded = True
 
     if embedded:
@@ -142,9 +175,14 @@ def predict_data(args):
             update_with_query_conf(args)
             conf = config.conf_dict
 
-            if "embedding_file" in args and args["embedding_file"] is not None:
+            if (
+                "embedding_file" in args
+                and args["embedding_file"] is not None
+            ):
                 uploaded_file = args["embedding_file"]
-                embedding = torch.load(uploaded_file.filename, map_location="cpu")
+                embedding = torch.load(
+                    uploaded_file.filename, map_location="cpu"
+                )
 
             model = model_loader(device, freeze)
             return run_prediction(embedding, model, freeze, device)
@@ -154,8 +192,6 @@ def predict_data(args):
             return {"error": str(e)}
     else:
         return {"error": "No audio or embedding file provided"}
-
-
 
 
 def update_with_query_conf(user_args):
@@ -218,9 +254,6 @@ def get_predict_args():
     return arg_dict
 
 
-
-
-
 def populate_parser(parser, default_conf):
     """
     Returns a arg-parse like parser.
@@ -268,4 +301,4 @@ def populate_parser(parser, default_conf):
                 )
             parser[g_key] = fields.Str(**opt_args)
 
-    return parser    
+    return parser

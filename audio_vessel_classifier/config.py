@@ -66,7 +66,10 @@ def check_conf(conf=CONF):
                         )
                     )
 
+
 check_conf()
+
+
 def get_conf_dict(conf=CONF):
     """
     Return configuration as dict
@@ -80,7 +83,6 @@ def get_conf_dict(conf=CONF):
     return conf_d
 
 
-
 # Constants
 API_NAME = "audio_vessel_classifier"
 DEFAULT_METADATA_FILENAME = "ai4-metadata.yml"
@@ -89,10 +91,13 @@ DEFAULT_METADATA_FILENAME = "ai4-metadata.yml"
 CWD = os.getcwd()
 AI4_METADATA_DIR = os.getenv(f"{API_NAME.upper()}_AI4_METADATA_DIR")
 
+
 # Fallback logic to locate ai4-metadata.yml
 def find_metadata_path():
     # 1. Check env var
-    if AI4_METADATA_DIR and os.path.isfile(os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)):
+    if AI4_METADATA_DIR and os.path.isfile(
+        os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)
+    ):
         return AI4_METADATA_DIR
 
     # 2. Check current directory
@@ -102,20 +107,29 @@ def find_metadata_path():
 
     # 3. Check subfolder with API_NAME
     subdir = os.path.join(CWD, API_NAME)
-    if os.path.isfile(os.path.join(subdir, DEFAULT_METADATA_FILENAME)):
+    if os.path.isfile(
+        os.path.join(subdir, DEFAULT_METADATA_FILENAME)
+    ):
         return subdir
 
     # 4. Check parent folder
     parent_dir = os.path.abspath(os.path.join(CWD, "..", API_NAME))
-    if os.path.isfile(os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)):
+    if os.path.isfile(
+        os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)
+    ):
         return parent_dir
 
-    raise FileNotFoundError(f"Could not find {DEFAULT_METADATA_FILENAME} in expected locations.")
+    raise FileNotFoundError(
+        f"Could not find {DEFAULT_METADATA_FILENAME} in expected locations."
+    )
+
 
 # Try to load YAML metadata
 try:
     AI4_METADATA_DIR = find_metadata_path()
-    metadata_file_path = os.path.join(AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME)
+    metadata_file_path = os.path.join(
+        AI4_METADATA_DIR, DEFAULT_METADATA_FILENAME
+    )
     with open(metadata_file_path, "r", encoding="utf-8") as stream:
         AI4_METADATA = yaml.safe_load(stream)
 except Exception as e:
@@ -125,35 +139,38 @@ except Exception as e:
 try:
     PACKAGE_METADATA = metadata.metadata(API_NAME)
 except metadata.PackageNotFoundError:
-    raise RuntimeError(f"Package metadata for '{API_NAME}' not found. Is it installed?")
+    raise RuntimeError(
+        f"Package metadata for '{API_NAME}' not found. Is it installed?"
+    )
 
 # Build PROJECT_METADATA dict
 try:
     PROJECT_METADATA = {
         "name": PACKAGE_METADATA["Name"],
-        "description": AI4_METADATA.get("description", "No description provided."),
+        "description": AI4_METADATA.get(
+            "description", "No description provided."
+        ),
         "license": PACKAGE_METADATA["License"],
         "version": PACKAGE_METADATA["Version"],
         "url": PACKAGE_METADATA.get("Project-URL", "N/A"),
     }
 
     # Parse authors and emails
-    _emails_list = PACKAGE_METADATA.get("Author-email", "").split(", ")
-    _emails = dict(map(lambda s: s[:-1].split(" <"), _emails_list)) if _emails_list[0] else {}
+    _emails_list = PACKAGE_METADATA.get("Author-email", "").split(
+        ", "
+    )
+    _emails = (
+        dict(map(lambda s: s[:-1].split(" <"), _emails_list))
+        if _emails_list[0]
+        else {}
+    )
     PROJECT_METADATA["author-email"] = _emails
-    PROJECT_METADATA["author"] = ", ".join(_emails.keys()) if _emails else "Unknown"
+    PROJECT_METADATA["author"] = (
+        ", ".join(_emails.keys()) if _emails else "Unknown"
+    )
 except Exception as e:
     raise RuntimeError(f"Error building PROJECT_METADATA: {e}")
 
 # Logging configuration
 ENV_LOG_LEVEL = os.getenv("API_LOG_LEVEL", default="INFO")
 LOG_LEVEL = getattr(logging, ENV_LOG_LEVEL.upper(), logging.INFO)
-
-
-
-
-
-
-
-
-
