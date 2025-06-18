@@ -33,7 +33,7 @@ import torch
 import torch.nn.functional as F
 import torchaudio
 from aiohttp.web import HTTPException
-from transformers import (ClapAudioModelWithProjection, ClapProcessor)
+from transformers import ClapAudioModelWithProjection, ClapProcessor
 from webargs import fields
 
 from audio_vessel_classifier import config
@@ -77,7 +77,9 @@ def predict(**args):
         raise HTTPException(reason=err) from err
 
 
-def load_and_prepare_waveform(wav_path, duration=10, desired_fs=48000, channel=0):
+def load_and_prepare_waveform(
+    wav_path, duration=10, desired_fs=48000, channel=0
+):
     waveform_info = torchaudio.info(wav_path)
     waveform, fs = torchaudio.load(wav_path)
 
@@ -96,9 +98,9 @@ def load_and_prepare_waveform(wav_path, duration=10, desired_fs=48000, channel=0
 
 def get_clap_embedding(x_np, desired_fs, freeze, device):
     processor = ClapProcessor.from_pretrained("davidrrobinson/BioLingual")
-    clap = ClapAudioModelWithProjection.from_pretrained("davidrrobinson/BioLingual").to(
-        device
-    )
+    clap = ClapAudioModelWithProjection.from_pretrained(
+        "davidrrobinson/BioLingual"
+    ).to(device)
 
     inputs = processor(
         audios=[x_np],
@@ -134,7 +136,8 @@ def predict_data(args):
         embedded = True
 
     if args.get("audio_file"):
-        wav_path = wav_path = args["audio_file"].filename  # Extract the temp file path
+        # Extract the temp file path
+        wav_path = wav_path = args["audio_file"].filename
         # path from args, not hardcoded
         x_np, desired_fs = load_and_prepare_waveform(wav_path)
         embedding = get_clap_embedding(x_np, desired_fs, freeze, device)
@@ -148,7 +151,9 @@ def predict_data(args):
 
             if "embedding_file" in args and args["embedding_file"] is not None:
                 uploaded_file = args["embedding_file"]
-                embedding = torch.load(uploaded_file.filename, map_location="cpu")
+                embedding = torch.load(
+                    uploaded_file.filename, map_location="cpu"
+                )
 
             model = model_loader(device, freeze)
             return run_prediction(embedding, model, freeze, device)
@@ -162,7 +167,8 @@ def predict_data(args):
 
 def update_with_query_conf(user_args):
     """
-    Update the default YAML configuration with the user's input args from the API query
+    Update the default YAML configuration
+    with the user's input args from the API query
     """
     # Update the default conf with the user input
     CONF = config.CONF
@@ -198,23 +204,20 @@ def get_predict_args():
             enum=["fine_tuning", "feature_extraction"],
             description="test multi-choice with strings",
         ),
-       
+
         "embedding_file": fields.Field(
             required=False,
             format="binary",
             type="file",
             location="form",
-            description="test image upload",  # "image" word in description is needed to be parsed by Gradio UI
+            description="test image upload",
         ),
         "audio_file": fields.Field(
             required=False,
             type="file",
             location="form",
-            description="test audio upload",  # "audio" word in description is needed to be parsed by Gradio UI
+            description="test audio upload",
         ),
-        # Add format type of the response of predict()
-        # For demo purposes, we allow the user to receive back either JSON, image or zip.
-        # More options for MIME types: https://mimeapplication.net/
     }
     # fmt: on
     return arg_dict
@@ -231,7 +234,11 @@ def populate_parser(parser, default_conf):
 
             # Load optional keys
             help = g_val["help"] if ("help" in gg_keys) else ""
-            type = getattr(builtins, g_val["type"]) if ("type" in gg_keys) else None
+            type = (
+                getattr(builtins, g_val["type"])
+                if ("type" in gg_keys)
+                else None
+            )
             choices = g_val["choices"] if ("choices" in gg_keys) else None
 
             # Additional info in help string

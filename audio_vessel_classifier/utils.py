@@ -28,16 +28,14 @@ def delete_all_subfolders(parent_dir):
 
 
 def save_layer_weights(model, model_path):
-    """
-    Saves the current weights of all defined layers to the given path.
-    """
-    for layer_name, layer in model.named_children():
-        layer_weights_path = os.path.join(model_path, f"{layer_name}.pth")
+    """Save weights of all layers to the specified path."""
+    for name, layer in model.named_children():
+        path = os.path.join(model_path, f"{name}.pth")
         try:
-            torch.save(layer.state_dict(), layer_weights_path)
-            print(f"Saved weights for layer '{layer_name}' to {layer_weights_path}")
+            torch.save(layer.state_dict(), path)
+            print(f"Saved '{name}' weights to {path}")
         except Exception as e:
-            print(f"Failed to save weights for layer '{layer_name}': {e}")
+            print(f"Failed to save '{name}' weights: {e}")
 
 
 def convert_labels_to_km(labels):
@@ -46,7 +44,7 @@ def convert_labels_to_km(labels):
         if label == max(labels):
             km_labels.append("10+ km")
         else:
-            km_labels.append(f"{label}-{label+1} km")
+            km_labels.append(f"{label}-{label + 1} km")
     return km_labels
 
 
@@ -61,7 +59,8 @@ def plot_confusion_matrix(
     This function prints and plots the confusion matrix.
     The colors are based on the percentage of each row.
     """
-    # Calculate the percentage values for coloring based on the total sum of the confusion matrix
+    # Calculate the percentage values for coloring based on the total sum of
+    # the confusion matrix
     total = np.sum(cm)
     cm_percentage = (
         cm.astype("float") / total
@@ -94,11 +93,14 @@ def plot_confusion_matrix(
             )  # Adjust text color based on percentage
 
             # Display the percentage in the cell as a higher value (of the row)
-            percentage_text = f"{cm_percentage[i, j] * 100:.1f}%"  # Format percentage
-            # plt.text(j, i, percentage_text, ha="center", va="bottom", fontsize=10, color="black")  # Display percentage
+            # Format percentage
+            # percentage_text = f"{cm_percentage[i, j] * 100:.1f}%"
+            # plt.text(j, i, percentage_text, ha="center", va="bottom",
+            # fontsize=10, color="black")  # Display percentage
 
     plt.tight_layout()
-    plt.xlabel("Predicted label", fontsize=18)  # Increased x-axis label font size
+    # Increased x-axis label font size
+    plt.xlabel("Predicted label", fontsize=18)
     plt.ylabel("True label", fontsize=18)  # Increased y-axis label font size
 
     if save_path:
@@ -136,7 +138,6 @@ class DatasetEmbeddings(DataLoader):
         )
         row = torch.load(embedding_path, map_location=self.device)
 
-        # row = pickle.load(os.path.join(self.folder_path, self.desc, f'embedding_{idx}.pt'))
         return row
 
 
@@ -151,13 +152,16 @@ class DatasetLoadEmbeddings(DataLoader):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        embedding_path = row["embedding"]  # Directly access the path from the DataFrame
+        # Directly access the path from the DataFrame
+        embedding_path = row["embedding"]
 
         # Load the embedding
         embedding = torch.load(embedding_path, map_location=self.device)
 
         # Get the label ID
-        label_tensor = torch.tensor(self.label_to_id[row["label"]], dtype=torch.long)
+        label_tensor = torch.tensor(
+            self.label_to_id[row["label"]], dtype=torch.long
+        )
 
         return embedding, label_tensor
 
@@ -191,7 +195,8 @@ class DatasetWaveform(DataLoader):
         # wav_path = self.wavs_folder.joinpath(row['Begin File'])
         waveform_info = torchaudio.info(wav_path)
 
-        # If the selection is in between two files, open both and concatenate them
+        # If the selection is in between two files, open both and concatenate
+        # them
         waveform, fs = torchaudio.load(wav_path)  # ,
         # num_frames=461472)
         # waveform, fs = torchaudio.load(wav_path,
@@ -207,7 +212,9 @@ class DatasetWaveform(DataLoader):
         max_samples = self.max_duration * self.desired_fs
         waveform = waveform[self.channel, :max_samples]
         if waveform.shape[0] < max_samples:
-            waveform = F_general.pad(waveform, (0, max_samples - waveform.shape[0]))
+            waveform = F_general.pad(
+                waveform, (0, max_samples - waveform.shape[0])
+            )
         # return wav_path torch.tensor(self.label_to_id[row['label']])
         return (
             waveform,
@@ -229,9 +236,6 @@ def max_finder(logits, ids):
                 predicted_values.append(key)
                 break
     return predicted_values
-
-
-import os
 
 
 def categorize_speed(speed):
@@ -290,7 +294,6 @@ def process_filenames(d_train):
     df["distance_category"] = df["distance"].apply(categorize_distance)
 
     # Create a combined_info column
-    # df['label'] = df['ship_type'] + ' at distance ' + df['distance_category'] + ' with speed ' + df['speed_category'] + ' is ' + df['activity']
     df["label"] = ["ship"] * len(df)
     # df['activity'] = ["activity"] * len(df['activity'])
     df["speed_category"] = ["speed_category"] * len(df)
@@ -335,15 +338,14 @@ def extract_features(class_string):
     return distance, speed, activity, vessel_type
 
 
-
-
 def custom_growth(x, param_a, param_b):
     if x < 0.625:
         # Linear growth from 0 to 0.625, reaching a value of 0.2 at x = 0.625
         return (0.2 / param_b) * x
     elif x <= 1:
         # Exponential growth from 0.625 to 1, reaching a value of 1 at x = 1
-        # a = 5  # Adjust this parameter to control the steepness of the exponential growth
+        # a = 5  # Adjust this parameter to control the steepness of the
+        # exponential growth
         return 0.2 + (1 - 0.2) * (1 - np.exp(-param_a * (x - param_b))) / (
             1 - np.exp(-param_a * (1 - param_b))
         )
@@ -376,9 +378,13 @@ def similarity(
 
     # Calculate similarity between each pair of classes
     for i, class_i in enumerate(classes):
-        distance_i, speed_i, activity_i, vessel_type_i = extract_features(class_i)
+        distance_i, speed_i, activity_i, vessel_type_i = extract_features(
+            class_i
+        )
         for j, class_j in enumerate(classes):
-            distance_j, speed_j, activity_j, vessel_type_j = extract_features(class_j)
+            distance_j, speed_j, activity_j, vessel_type_j = extract_features(
+                class_j
+            )
             distance_similarity = 1 - abs(distance_i - distance_j) / 10
             # distance_similarity = sim_calculator(distance_similarity)
             if L2:
@@ -405,26 +411,7 @@ def similarity(
     return torch.tensor(similarity_matrix).to(device)
 
 
-# def metrics_calculator(similarity_matrix,logits,metrics,y):
-#     values_tensor=similarity_matrix[y]
-#     max_positions = torch.argmax(values_tensor, dim=1)  # This should be shape [16]
-
-#     predics = values_tensor[torch.arange(values_tensor.size(0)), max_positions]
-#     print("Corrected max_positions shape:", max_positions.shape)  # Should print torch.Size([16])
-#     metrics.extend(predics.tolist())
-#     # values_tensor=similarity_matrix[y]
-#     # max_positions=torch.argmax(logits, dim=1)
-#     # print("values_tensor shape:", values_tensor.shape)
-#     # print("max_positions shape:", max_positions.shape)
-#     # print("values_tensor size(0):", values_tensor.size(0))
-
-#     # predics=values_tensor[torch.arange(values_tensor.size(0)), max_positions]
-#     # metrics.extend(predics.tolist())
-#     return metrics
-
-
 def metrics_calculator(similarity_matrix, logits, metrics, y):
-
     values_tensor = similarity_matrix[y]
     max_positions = torch.argmax(logits, dim=1)
 
