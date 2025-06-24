@@ -20,8 +20,8 @@ classifiers = [
 dynamic = ["version", "dependencies"]
 
 [project.urls]
-"Homepage" = "https://github.com/ai4os-hub/audio_vessel_classifier"
-"Bug Tracker" = "https://github.com/ai4os-hub/audio_vessel_classifier/issues"
+"Homepage" = "https://github.com/ai4os-hub/audio-vessel-classifier"
+"Bug Tracker" = "https://github.com/ai4os-hub/audio-vessel-classifier/issues"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
