@@ -10,6 +10,7 @@ import builtins
 import logging
 import os
 from importlib import metadata
+from pathlib import Path
 
 import yaml
 
@@ -87,8 +88,8 @@ def get_conf_dict(conf=CONF):
 API_NAME = "audio-vessel-classifier"
 DEFAULT_METADATA_FILENAME = "ai4-metadata.yml"
 
-# Get current working directory and possible metadata env variable
-CWD = os.getcwd()
+# Get BASE_DIR of the application and possible metadata env variable
+BASE_DIR = Path(__file__).resolve().parents[1]
 AI4_METADATA_DIR = os.getenv(f"{API_NAME.upper()}_AI4_METADATA_DIR")
 
 
@@ -100,18 +101,18 @@ def find_metadata_path():
     ):
         return AI4_METADATA_DIR
 
-    # 2. Check current directory
-    possible_path = os.path.join(CWD, DEFAULT_METADATA_FILENAME)
+    # 2. Check BASE_DIR directory
+    possible_path = os.path.join(BASE_DIR, DEFAULT_METADATA_FILENAME)
     if os.path.isfile(possible_path):
-        return CWD
+        return BASE_DIR
 
     # 3. Check subfolder with API_NAME
-    subdir = os.path.join(CWD, API_NAME)
+    subdir = os.path.join(BASE_DIR, API_NAME)
     if os.path.isfile(os.path.join(subdir, DEFAULT_METADATA_FILENAME)):
         return subdir
 
     # 4. Check parent folder
-    parent_dir = os.path.abspath(os.path.join(CWD, "..", API_NAME))
+    parent_dir = os.path.abspath(os.path.join(BASE_DIR, "..", API_NAME))
     if os.path.isfile(os.path.join(parent_dir, DEFAULT_METADATA_FILENAME)):
         return parent_dir
 
