@@ -1,7 +1,8 @@
 # audio-vessel-classifier
 [![Build Status](https://jenkins.services.ai4os.eu/buildStatus/icon?job=AI4OS-hub/audio-vessel-classification/main)](https://jenkins.services.ai4os.eu/job/AI4OS-hub/job/audio-vessel-classification/job/main/)
 
-
+The weights of the models (fine-tuning & feature-extraction) can be requested by emailing: wout.decrop@vliz.be
+The weights are currently not open-source untill the paper (in submission) is accepted
 
 To launch it, first install the package then run [deepaas](https://github.com/ai4os/DEEPaaS):
 ```bash
@@ -10,6 +11,9 @@ cd audio-vessel-classifier
 pip install -e .
 deepaas-run --listen-ip 0.0.0.0
 ```
+
+You will have the option to upload either a (10 sec) .wav file or  embedding file (.pt)
+You can then choose if you want to use the feature-extraction or fine-tuning model. The fine-tuning model has a slightly higher performance and is most recommended.
 
 ## Project structure
 ```
