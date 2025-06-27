@@ -6,6 +6,7 @@ description: |-
   The weights of the models (fine-tuning & feature-extraction) can be requested by emailing: wout.decrop@vliz.be
   The weights are currently not open-source untill the paper (in submission) is accepted
   
+  
 # doi: http://add-some-DOI-url.com
 dates:
   created: "2025-05-14"
