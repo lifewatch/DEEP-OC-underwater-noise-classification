@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "audio_vessel_classifier"
+name = "audio-vessel-classifier"
 authors = [
     { name = "wout decrop", email = "wout.decrop@vliz.be" },
 ]
@@ -20,8 +20,8 @@ classifiers = [
 dynamic = ["version", "dependencies"]
 
 [project.urls]
-"Homepage" = "https://github.com/ai4os-hub/audio_vessel_classifier"
-"Bug Tracker" = "https://github.com/ai4os-hub/audio_vessel_classifier/issues"
+"Homepage" = "https://github.com/ai4os-hub/audio-vessel-classifier"
+"Bug Tracker" = "https://github.com/ai4os-hub/audio-vessel-classifier/issues"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -34,14 +34,14 @@ env = [
 addopts = "--import-mode=importlib"
 
 [tool.setuptools]
-packages = [ "audio_vessel_classifier" ]
+packages = [ "audio-vessel-classifier" ]
 
 [tool.setuptools.package-dir]
-"audio_vessel_classifier" = "audio_vessel_classifier"
+"audio-vessel-classifier" = "audio-vessel-classifier"
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 version = { file = "VERSION" }
 
 [project.entry-points."deepaas.v2.model"]
-audio_vessel_classifier = "audio_vessel_classifier.api"
+audio-vessel-classifier = "audio-vessel-classifier.api"

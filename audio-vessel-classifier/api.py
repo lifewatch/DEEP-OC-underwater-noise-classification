@@ -36,8 +36,8 @@ from aiohttp.web import HTTPException
 from transformers import ClapAudioModelWithProjection, ClapProcessor
 from webargs import fields
 
-from audio_vessel_classifier import config
-from audio_vessel_classifier.models import model_loader
+from audio-vessel-classifier import config
+from audio-vessel-classifier.models import model_loader
 
 logger = logging.getLogger(__name__)
 logger.setLevel(config.LOG_LEVEL)

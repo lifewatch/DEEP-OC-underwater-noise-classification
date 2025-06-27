@@ -12,7 +12,7 @@ you make to the code.
 
 import unittest
 
-import audio_vessel_classifier.api as api
+import audio-vessel-classifier.api as api
 
 
 class TestModelMethods(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestModelMethods(unittest.TestCase):
         """
         self.assertEqual(
             self.meta["name"].lower().replace("-", "_"),
-            "audio_vessel_classifier".lower().replace("-", "_"),
+            "audio-vessel-classifier".lower().replace("-", "_"),
         )
         self.assertEqual(
             self.meta["author"],

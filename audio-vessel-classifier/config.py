@@ -84,7 +84,7 @@ def get_conf_dict(conf=CONF):
 
 
 # Constants
-API_NAME = "audio_vessel_classifier"
+API_NAME = "audio-vessel-classifier"
 DEFAULT_METADATA_FILENAME = "ai4-metadata.yml"
 
 # Get current working directory and possible metadata env variable
