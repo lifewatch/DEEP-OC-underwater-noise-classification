@@ -77,8 +77,10 @@ def model_loader(device, freeze=True):
             "models/fine_tuning/model"
         )
         clap_model = ClapAudioModelWithProjection.from_pretrained(
-            clap_model_path
+            clap_model_path,
+            revision="808bb50859ce7d0c0fcc2b233676c7ba9319107e"
         ).to(device)
+
         clap_model.eval()
 
         # Load linear head

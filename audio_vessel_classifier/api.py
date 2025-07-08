@@ -97,10 +97,18 @@ def load_and_prepare_waveform(
 
 
 def get_clap_embedding(x_np, desired_fs, freeze, device):
-    processor = ClapProcessor.from_pretrained("davidrrobinson/BioLingual")
+    # Get this hash from the model card under 'Files and versions' (use commit SHA)
+    revision = "808bb50859ce7d0c0fcc2b233676c7ba9319107e"  
+
+    processor = ClapProcessor.from_pretrained(
+        "davidrrobinson/BioLingual",
+        revision="808bb50859ce7d0c0fcc2b233676c7ba9319107e"
+    )
     clap = ClapAudioModelWithProjection.from_pretrained(
-        "davidrrobinson/BioLingual"
+        "davidrrobinson/BioLingual",
+        revision="808bb50859ce7d0c0fcc2b233676c7ba9319107e"
     ).to(device)
+
 
     inputs = processor(
         audios=[x_np],
