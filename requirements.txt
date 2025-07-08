@@ -9,9 +9,6 @@ pyyaml==6.0.1
 webargs~=5.5.3
 deepaas>=2.1.0
 
-# For HTTP exceptions in aiohttp
-aiohttp==3.9.5  # or compatible, since you use aiohttp.web.HTTPException
-
 # For Hugging Face audio models (CLAP)
 tokenizers==0.15.1
 huggingface-hub==0.20.3
