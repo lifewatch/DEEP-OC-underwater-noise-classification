@@ -14,7 +14,7 @@
     "dataset_url": "http://add-some-url-pointing-to-your-dataset.com",
     "sources": {
 		"dockerfile_repo": "https://github.com/ai4os-hub/audio_vessel_classifier",
-		"docker_registry_repo": "ai4oshub/audio_vessel_classifier",
+		"docker_registry_repo": "ai4oshub/audio-vessel-classifier",
 		"code": "https://github.com/ai4os-hub/audio_vessel_classifier",
 		"ai4_template": "ai4-template/2.2.0"
     },
